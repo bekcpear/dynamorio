@@ -1,6 +1,7 @@
 /* **********************************************************
  * Copyright (c) 2011-2022 Google, Inc.  All rights reserved.
  * Copyright (c) 2008-2010 VMware, Inc.  All rights reserved.
+ * Copyright (c) 2021 Siemens AG
  * **********************************************************/
 
 /*
@@ -116,6 +117,18 @@ static bool nocheck;
 #elif defined(DRINJECT)
 #    define TOOLNAME "drinject"
 #endif
+
+#ifndef SOVERSION
+#    error "No SOVERSION defined"
+#endif
+
+#define STR_APPEND_SOVERSION(str) str "." STRINGIFY(SOVERSION)
+#define DRPATH_GNU_I386                            \
+    "usr/lib/i386-linux-gnu/DynamoRIO-" STRINGIFY( \
+        SOVERSION) "/release/libdynamorio.so." STRINGIFY(SOVERSION)
+#define DRPATH_GNU_AMD64                             \
+    "usr/lib/x86_64-linux-gnu/DynamoRIO-" STRINGIFY( \
+        SOVERSION) "/release/libdynamorio.so." STRINGIFY(SOVERSION)
 
 const char *usage_str =
 #ifdef DRCONFIG
@@ -325,6 +338,9 @@ const char *options_list_str =
 #endif /* !DRCONFIG */
     ;
 
+const char *tool_rel_path_gnu = "etc/DynamoRIO";
+const char *tool_rel_path_dr = "tools";
+
 static bool
 does_file_exist(const char *path)
 {
@@ -404,6 +420,7 @@ static void
 read_tool_list(const char *dr_root, dr_platform_t dr_platform)
 {
     FILE *f;
+    char const *list_relative_path = tool_rel_path_dr;
     char list_file[MAXIMUM_PATH];
     size_t sofar = 0;
     const char *arch = IF_X64_ELSE("64", "32");
@@ -411,8 +428,10 @@ read_tool_list(const char *dr_root, dr_platform_t dr_platform)
         arch = "32";
     else if (dr_platform == DR_PLATFORM_64BIT)
         arch = "64";
-    _snprintf(list_file, BUFFER_SIZE_ELEMENTS(list_file), "%s/tools/list%s", dr_root,
-              arch);
+    if (strcmp(dr_root, "/") == 0)
+        list_relative_path = tool_rel_path_gnu;
+    _snprintf(list_file, BUFFER_SIZE_ELEMENTS(list_file), "%s/%s/list%s", dr_root,
+              list_relative_path, arch);
     NULL_TERMINATE_BUFFER(list_file);
     f = fopen_utf8(list_file, "r");
     if (f == NULL) {
@@ -511,6 +530,8 @@ expand_dr_root(const char *dr_root, bool debug, dr_platform_t dr_platform, bool 
         { "lib32/release/libdynamorio.so", true, false, false, DR_PLATFORM_32BIT },
         { "lib64/debug/libdynamorio.so", true, true, false, DR_PLATFORM_64BIT },
         { "lib64/release/libdynamorio.so", true, false, false, DR_PLATFORM_64BIT },
+        { DRPATH_GNU_AMD64, true, false, false, DR_PLATFORM_64BIT },
+        { DRPATH_GNU_I386, true, false, false, DR_PLATFORM_32BIT }
 #endif
     };
 
@@ -924,13 +945,16 @@ read_tool_file(const char *toolname, const char *dr_root, dr_platform_t dr_platf
     char config_file[MAXIMUM_PATH];
     char line[MAXIMUM_PATH];
     bool found_client = false;
+    char const *tool_rel_path = tool_rel_path_dr;
     const char *arch = IF_X64_ELSE("64", "32");
     if (dr_platform == DR_PLATFORM_32BIT)
         arch = "32";
     else if (dr_platform == DR_PLATFORM_64BIT)
         arch = "64";
-    _snprintf(config_file, BUFFER_SIZE_ELEMENTS(config_file), "%s/tools/%s.drrun%s",
-              dr_root, toolname, arch);
+    if (strcmp(dr_root, "/") == 0)
+        tool_rel_path = tool_rel_path_gnu;
+    _snprintf(config_file, BUFFER_SIZE_ELEMENTS(config_file), "%s/%s/%s.drrun%s", dr_root,
+              tool_rel_path, toolname, arch);
     NULL_TERMINATE_BUFFER(config_file);
     info("reading tool config file %s", config_file);
     f = fopen_utf8(config_file, "r");
