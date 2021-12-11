@@ -162,7 +162,12 @@ if (check_libc)
   endforeach ()
 
   if (too_recent)
-    message(FATAL_ERROR "*** Error: ${${lib_file}} has too-recent import(s):${too_recent}")
+    if (USE_GNU_DIR_LAYOUT)
+      set(ERROR_TYPE DEBUG)
+    else()
+      set(ERROR_TYPE FATAL_ERROR)
+    endif()
+    message(${ERROR_TYPE} "*** Error: ${${lib_file}} has too-recent import(s):${too_recent}")
   endif ()
 endif ()
 
