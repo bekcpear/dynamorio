@@ -361,4 +361,26 @@ struct fpsimd_context {
 
 #endif /* AARCH64 */
 
+#ifdef RISCV64
+/*
+ * TODO: riscv64
+ */
+
+/*
+ * TODO: this is a copy of AARCH64
+ */
+typedef struct _kernel_sigcontext_t {
+    unsigned long long fault_address;
+    unsigned long long regs[31];
+    unsigned long long sp;
+    unsigned long long pc;
+    unsigned long long pstate;
+    /* 4K reserved for FP/SIMD state and future expansion */
+    unsigned char __reserved[4096] __attribute__((__aligned__(16)));
+} kernel_sigcontext_t;
+
+#endif /* RISCV64 */
+
+
+
 #endif /* _SIGCONTEXT_H_ */

@@ -1125,7 +1125,46 @@ enum {
     DR_REG_XSP = DR_REG_SP,
 #    endif
 
-#endif /* X86/ARM */
+#elif defined(RISCV64)
+    /* 64-bit general purpose */
+    DR_REG_X0,  /**< The "x0" register. */
+    DR_REG_X1,  /**< The "x1" register. */
+    DR_REG_X2,  /**< The "x2" register. */
+    DR_REG_X3,  /**< The "x3" register. */
+    DR_REG_X4,  /**< The "x4" register. */
+    DR_REG_X5,  /**< The "x5" register. */
+    DR_REG_X6,  /**< The "x6" register. */
+    DR_REG_X7,  /**< The "x7" register. */
+    DR_REG_X8,  /**< The "x8" register. */
+    DR_REG_X9,  /**< The "x9" register. */
+    DR_REG_X10, /**< The "x10" register. */
+    DR_REG_X11, /**< The "x11" register. */
+    DR_REG_X12, /**< The "x12" register. */
+    DR_REG_X13, /**< The "x13" register. */
+    DR_REG_X14, /**< The "x14" register. */
+    DR_REG_X15, /**< The "x15" register. */
+    DR_REG_X16, /**< The "x16" register. */
+    DR_REG_X17, /**< The "x17" register. */
+    DR_REG_X18, /**< The "x18" register. */
+    DR_REG_X19, /**< The "x19" register. */
+    DR_REG_X20, /**< The "x20" register. */
+    DR_REG_X21, /**< The "x21" register. */
+    DR_REG_X22, /**< The "x22" register. */
+    DR_REG_X23, /**< The "x23" register. */
+    DR_REG_X24, /**< The "x24" register. */
+    DR_REG_X25, /**< The "x25" register. */
+    DR_REG_X26, /**< The "x26" register. */
+    DR_REG_X27, /**< The "x27" register. */
+    DR_REG_X28, /**< The "x28" register. */
+    DR_REG_X29, /**< The "x29" register. */
+    DR_REG_X30, /**< The "x30" register. */
+    DR_REG_X31, /**< The "x31" register. */
+
+    DR_REG_START_GPR = DR_REG_X0, /**< Start of full-size general-purpose registers */
+    DR_REG_STOP_GPR = DR_REG_X31, /**< End of full-size general-purpose registers */
+    DR_NUM_GPR_REGS = DR_REG_STOP_GPR - DR_REG_START_GPR + 1, /**< Count of GPR regs. */
+
+#endif /* X86/ARM/RISCV64 */
 };
 
 /* we avoid typedef-ing the enum, as its storage size is compiler-specific */

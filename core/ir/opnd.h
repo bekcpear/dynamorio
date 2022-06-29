@@ -99,7 +99,11 @@ extern const reg_id_t dr_reg_fixer[];
 /* We only normally use r0-r5 but we support more in translation code */
 #    define REG_START_SPILL DR_REG_R0
 #    define REG_STOP_SPILL DR_REG_R10 /* r10 might be used in syscall mangling */
-#endif                                /* X86/ARM */
+#elif defined(RISCV64)
+/* We only normally use r0-r5 but we support more in translation code */
+#    define REG_START_SPILL DR_REG_R0
+#    define REG_STOP_SPILL DR_REG_R10 /* r10 might be used in syscall mangling */
+#endif                                /* X86/ARM/RISCV64 */
 #define REG_SPILL_NUM (REG_STOP_SPILL - REG_START_SPILL + 1)
 
 #ifndef INT8_MIN
@@ -277,6 +281,23 @@ enum {
     DR_SYSNUM_REG = DR_REG_R7,
     NUM_REGPARM = 4,
 #    endif /* 64/32 */
+    REDZONE_SIZE = 0,
+    REGPARM_MINSTACK = 0,
+    REGPARM_END_ALIGN = 8,
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     */
+    REGPARM_0 = DR_REG_X0,
+    REGPARM_1 = DR_REG_X1,
+    REGPARM_2 = DR_REG_X2,
+    REGPARM_3 = DR_REG_X3,
+    DR_SYSNUM_REG = DR_REG_X8,
+    REGPARM_4 = DR_REG_X4,
+    REGPARM_5 = DR_REG_X5,
+    REGPARM_6 = DR_REG_X6,
+    REGPARM_7 = DR_REG_X7,
+    NUM_REGPARM = 8,
     REDZONE_SIZE = 0,
     REGPARM_MINSTACK = 0,
     REGPARM_END_ALIGN = 8,

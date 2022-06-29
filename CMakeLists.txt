@@ -837,6 +837,8 @@ if (UNIX)
         set(BASE_CFLAGS "-mfloat-abi=softfp ${BASE_CFLAGS}")
       endif ()
     endif (X64)
+  elseif (RISCV64)
+    set(BASE_CFLAGS "-march=rv64gc -mabi=lp64d ${BASE_CFLAGS}")
   endif ()
   if (APPLE AND CMAKE_COMPILER_IS_CLANG)
     # Ensure our binaries can run on older OSX

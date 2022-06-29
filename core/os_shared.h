@@ -1079,8 +1079,19 @@ enum {
     JMP_REL32_SIZE = 4,
     CALL_REL32_OPCODE = 0xed000000,
 };
+#elif defined(RISCV64)
+/*
+ * TODO: riscv64
+ * TODO: this is a copy of AARCHXX
+ */
+enum {
+    /* FIXME i#1551, i#1569: this is for A32 for now to get things compiling */
+    JMP_REL32_OPCODE = 0xec000000,
+    JMP_REL32_SIZE = 4,
+    CALL_REL32_OPCODE = 0xed000000,
+};
 #else
-#    error only X86 and ARM supported
+#    error only X86, ARM and RISCV64 supported
 #endif /* X86 */
 
 #ifdef WINDOWS

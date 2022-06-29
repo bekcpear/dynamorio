@@ -155,6 +155,12 @@ typedef struct _spill_state_t {
     /* These are needed for ldex/stex mangling and A64 icache_op_ic_ivau_asm. */
     reg_t r4, r5;
     reg_t reg_stolen; /* slot for the stolen register */
+#elif defined(RISCV64)
+    /* TODO: riscv64 */
+    reg_t r0, r1, r2, r3;
+    /* These are needed for ldex/stex mangling and A64 icache_op_ic_ivau_asm. */
+    reg_t r4, r5;
+    reg_t reg_stolen; /* slot for the stolen register */
 #endif
     /* XXX: move this below the tables to fit more on cache line */
     dcontext_t *dcontext;
@@ -220,7 +226,23 @@ typedef struct _local_state_extended_t {
 #    define SCRATCH_REG4 DR_REG_R4
 #    define SCRATCH_REG5 DR_REG_R5
 #    define SCRATCH_REG_LAST SCRATCH_REG5
-#endif /* X86/ARM */
+#elif defined(RISCV64)
+/* TODO: riscv64 */
+#    define TLS_REG0_SLOT ((ushort)offsetof(spill_state_t, r0))
+#    define TLS_REG1_SLOT ((ushort)offsetof(spill_state_t, r1))
+#    define TLS_REG2_SLOT ((ushort)offsetof(spill_state_t, r2))
+#    define TLS_REG3_SLOT ((ushort)offsetof(spill_state_t, r3))
+#    define TLS_REG4_SLOT ((ushort)offsetof(spill_state_t, r4))
+#    define TLS_REG5_SLOT ((ushort)offsetof(spill_state_t, r5))
+#    define TLS_REG_STOLEN_SLOT ((ushort)offsetof(spill_state_t, reg_stolen))
+#    define SCRATCH_REG0 DR_REG_R0
+#    define SCRATCH_REG1 DR_REG_R1
+#    define SCRATCH_REG2 DR_REG_R2
+#    define SCRATCH_REG3 DR_REG_R3
+#    define SCRATCH_REG4 DR_REG_R4
+#    define SCRATCH_REG5 DR_REG_R5
+#    define SCRATCH_REG_LAST SCRATCH_REG5
+#endif /* X86/ARM/RISCV64 */
 #define IBL_TARGET_REG SCRATCH_REG2
 #define IBL_TARGET_SLOT TLS_REG2_SLOT
 #define TLS_DCONTEXT_SLOT ((ushort)offsetof(spill_state_t, dcontext))
@@ -338,7 +360,18 @@ get_stack_ptr(void);
 #        define GET_STACK_PTR(var) __asm__ __volatile__("str sp, %0" : "=m"(var))
 #        define GET_CUR_PC(var) \
             __asm__ __volatile__("bl 1f; 1: str lr, %0" : "=m"(var) : : "lr")
-#    endif /* X86/ARM */
+#    elif defined(DR_HOST_RISCV64)
+/* TODO: riscv64 */
+#        define RDTSC_LL(llval)                 \
+            do {                                \
+                (llval) = proc_get_timestamp(); \
+            } while (0)
+
+#        define GET_FRAME_PTR(var) __asm__ __volatile__("mv %0, x29" : "=r"(var))
+#        define GET_STACK_PTR(var) __asm__ __volatile__("mv %0, sp" : "=r"(var))
+#        define GET_CUR_PC(var) \
+            __asm__ __volatile__("bl 1f; 1: str x30, %0" : "=m"(var) : : "x30")
+#    endif /* X86/ARM/RISCV64 */
 #endif     /* UNIX */
 
 #define DEBUGGER_INTERRUPT_BYTE 0xcc

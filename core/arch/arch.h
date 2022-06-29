@@ -151,7 +151,41 @@ mixed_mode_enabled(void)
 #    define SCRATCH_REG4_OFFS R4_OFFSET
 #    define SCRATCH_REG5_OFFS R5_OFFSET
 #    define REG_OFFSET(reg) (R0_OFFSET + ((reg)-DR_REG_R0) * sizeof(reg_t))
-#endif /* X86/ARM */
+#elif defined(RISCV64)
+/* TODO: riscv64 */
+#    define R0_OFFSET ((MC_OFFS) + (offsetof(priv_mcontext_t, r0)))
+#    define REG0_OFFSET R0_OFFSET
+#    define R1_OFFSET ((MC_OFFS) + (offsetof(priv_mcontext_t, r1)))
+#    define REG1_OFFSET R1_OFFSET
+#    define R2_OFFSET ((MC_OFFS) + (offsetof(priv_mcontext_t, r2)))
+#    define R3_OFFSET ((MC_OFFS) + (offsetof(priv_mcontext_t, r3)))
+#    define R4_OFFSET ((MC_OFFS) + (offsetof(priv_mcontext_t, r4)))
+#    define R5_OFFSET ((MC_OFFS) + (offsetof(priv_mcontext_t, r5)))
+#    define R6_OFFSET ((MC_OFFS) + (offsetof(priv_mcontext_t, r6)))
+#    define R7_OFFSET ((MC_OFFS) + (offsetof(priv_mcontext_t, r7)))
+#    define R8_OFFSET ((MC_OFFS) + (offsetof(priv_mcontext_t, r8)))
+#    define R9_OFFSET ((MC_OFFS) + (offsetof(priv_mcontext_t, r9)))
+#    define R10_OFFSET ((MC_OFFS) + (offsetof(priv_mcontext_t, r10)))
+#    define R11_OFFSET ((MC_OFFS) + (offsetof(priv_mcontext_t, r11)))
+#    define R12_OFFSET ((MC_OFFS) + (offsetof(priv_mcontext_t, r12)))
+#    define R13_OFFSET ((MC_OFFS) + (offsetof(priv_mcontext_t, r13)))
+#    define R14_OFFSET ((MC_OFFS) + (offsetof(priv_mcontext_t, r14)))
+#    define XFLAGS_OFFSET ((MC_OFFS) + (offsetof(priv_mcontext_t, xflags)))
+#    define PC_OFFSET ((MC_OFFS) + (offsetof(priv_mcontext_t, pc)))
+#    define SCRATCH_REG0 DR_REG_R0
+#    define SCRATCH_REG1 DR_REG_R1
+#    define SCRATCH_REG2 DR_REG_R2
+#    define SCRATCH_REG3 DR_REG_R3
+#    define SCRATCH_REG4 DR_REG_R4
+#    define SCRATCH_REG5 DR_REG_R5
+#    define SCRATCH_REG0_OFFS R0_OFFSET
+#    define SCRATCH_REG1_OFFS R1_OFFSET
+#    define SCRATCH_REG2_OFFS R2_OFFSET
+#    define SCRATCH_REG3_OFFS R3_OFFSET
+#    define SCRATCH_REG4_OFFS R4_OFFSET
+#    define SCRATCH_REG5_OFFS R5_OFFSET
+#    define REG_OFFSET(reg) (R0_OFFSET + ((reg)-DR_REG_R0) * sizeof(reg_t))
+#endif /* X86/ARM/RISCV64 */
 #define XSP_OFFSET ((MC_OFFS) + (offsetof(priv_mcontext_t, xsp)))
 #define XFLAGS_OFFSET ((MC_OFFS) + (offsetof(priv_mcontext_t, xflags)))
 #define PC_OFFSET ((MC_OFFS) + (offsetof(priv_mcontext_t, pc)))
@@ -587,6 +621,9 @@ mangle_insert_clone_code(dcontext_t *dcontext, instrlist_t *ilist,
 #        define ABI_STACK_ALIGNMENT 4
 #    endif
 #elif defined(AARCH64)
+#    define ABI_STACK_ALIGNMENT 16
+#elif defined(RISCV64)
+/* TODO: riscv64 */
 #    define ABI_STACK_ALIGNMENT 16
 #elif defined(ARM)
 #    define ABI_STACK_ALIGNMENT 8

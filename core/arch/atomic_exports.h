@@ -723,7 +723,111 @@ atomic_dec_becomes_zero(volatile int *var)
                                  : "r2")
 #        define SET_IF_NOT_ZERO(flag) SET_FLAG(ne, flag)
 #        define SET_IF_NOT_LESS(flag) SET_FLAG(ge, flag)
-#    endif /* X86/ARM */
+#    elif defined(DR_HOST_RISCV64)
+/*
+ * TODO: riscv64
+ * TODO: this is just a copy of AARCH64
+ */
+#        define ATOMIC_1BYTE_READ(addr_src, addr_res)                \
+            do {                                                     \
+            } while (0)
+#        define ATOMIC_1BYTE_WRITE(target, value, hot_patch)   \
+            do {                                               \
+            } while (0)
+#        define ATOMIC_4BYTE_WRITE(target, value, hot_patch)                    \
+            do {                                                                \
+            } while (0)
+#        define ATOMIC_4BYTE_ALIGNED_WRITE ATOMIC_4BYTE_WRITE
+#        define ATOMIC_4BYTE_ALIGNED_READ(addr_src, addr_res)       \
+            do {                                                    \
+            } while (0)
+#        define ATOMIC_8BYTE_WRITE(target, value, hot_patch)   \
+            do {                                               \
+            } while (0)
+#        define ATOMIC_8BYTE_ALIGNED_WRITE ATOMIC_8BYTE_WRITE
+#        define ATOMIC_8BYTE_ALIGNED_READ(addr_src, addr_res)       \
+            *addr_res = 1; \
+            do { \
+            } while (0)
+
+#        define DEF_ATOMIC_incdec(fname, type, r, op)                             \
+            static inline void fname(volatile type *var)                          \
+            {                                                                     \
+            }
+DEF_ATOMIC_incdec(ATOMIC_INC_int, int, "w", "add") DEF_ATOMIC_incdec(ATOMIC_INC_int64,
+                                                                     int64, "x", "add")
+    DEF_ATOMIC_incdec(ATOMIC_DEC_int, int, "w", "sub")
+        DEF_ATOMIC_incdec(ATOMIC_DEC_int64, int64, "x", "sub")
+#        undef DEF_ATOMIC_incdec
+
+#        define ATOMIC_INC(type, var) ATOMIC_INC_##type(&var)
+#        define ATOMIC_DEC(type, var) ATOMIC_DEC_##type(&var)
+
+#        define DEF_ATOMIC_ADD(fname, type, r)                                    \
+            static inline void fname(volatile type *var, type val)                \
+            {                                                                     \
+            }
+            DEF_ATOMIC_ADD(ATOMIC_ADD_int, int, "w") DEF_ATOMIC_ADD(ATOMIC_ADD_int64,
+                                                                    int64, "x")
+#        undef DEF_ATOMIC_ADD
+
+#        define ATOMIC_ADD(type, var, val) ATOMIC_ADD_##type(&var, val)
+
+#        define DEF_ATOMIC_ADD_EXCHANGE(fname, type, reg)                             \
+            static inline type fname(volatile type *var, type val)                    \
+            {                                                                         \
+                return *var;                                                           \
+            }
+                DEF_ATOMIC_ADD_EXCHANGE(atomic_add_exchange_int, int, "w")
+                    DEF_ATOMIC_ADD_EXCHANGE(atomic_add_exchange_int64, int64, "x")
+#        undef DEF_ATOMIC_ADD_EXCHANGE
+
+#        define atomic_add_exchange atomic_add_exchange_int
+
+#        define DEF_atomic_compare_exchange(fname, type, r)                           \
+            static inline bool fname(volatile type *var, type compare, type exchange) \
+            {                                                                         \
+                return true;                                                           \
+            }
+                        DEF_atomic_compare_exchange(atomic_compare_exchange_int, int, "w")
+                            DEF_atomic_compare_exchange(atomic_compare_exchange_int64,
+                                                        int64, "x")
+#        undef DEF_atomic_compare_exchange
+
+                                static inline int atomic_exchange_int(volatile int *var,
+                                                                      int newval)
+{
+    return *var;
+}
+
+#        define MEMORY_STORE_BARRIER() __asm__ __volatile__("dmb st")
+/* i#4719: QEMU crashes on "wfi" so we use the superset "wfe".
+ * XXX: Consider issuing "sev" on lock release?
+ */
+#        define SPINLOCK_PAUSE()             \
+            do {                             \
+            } while (0) /* wait for interrupt */
+
+static inline bool
+atomic_inc_and_test(volatile int *var)
+{
+    return atomic_add_exchange_int(var, 1) == 0;
+}
+
+static inline bool
+atomic_dec_and_test(volatile int *var)
+{
+    return atomic_add_exchange_int(var, -1) == -1;
+}
+
+static inline bool
+atomic_dec_becomes_zero(volatile int *var)
+{
+    return atomic_add_exchange_int(var, -1) == 0;
+}
+
+
+#    endif /* X86/ARM/RISCV64 */
 
 #    ifdef X64
 #        define ATOMIC_ADD_PTR(type, var, val) ATOMIC_ADD_int64(var, val)
@@ -737,7 +841,7 @@ atomic_dec_becomes_zero(volatile int *var)
 #        define ATOMIC_COMPARE_EXCHANGE_PTR ATOMIC_COMPARE_EXCHANGE
 #    endif
 
-#    ifndef DR_HOST_AARCH64
+#    if !defined(DR_HOST_AARCH64) && !defined(DR_HOST_RISCV64)
 /* Atomically increments *var by 1
  * Returns true if the resulting value is zero, otherwise returns false
  */
@@ -852,7 +956,7 @@ atomic_add_exchange_int64(volatile int64 *var, int64 value)
 #        undef ATOMIC_ADD_EXCHANGE_suffix
 #        undef ATOMIC_ADD_EXCHANGE_int
 #        undef ATOMIC_ADD_EXCHANGE_int64
-#    endif /* !AARCH64 */
+#    endif /* !AARCH64 and !RISCV64(TODO?) */
 
 #endif /* UNIX */
 

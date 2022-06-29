@@ -45,6 +45,7 @@
 #   undef X86
 #   undef AARCH64
 #   undef AARCHXX
+#   undef RISCV64 
 #   undef X64
 #   ifdef DR_HOST_X86
 #       define X86
@@ -52,6 +53,8 @@
 #       define AARCH64
 #   elif defined(DR_HOST_ARM)
 #       define ARM
+#   elif defined(DR_HOST_RISCV64)
+#       define RISCV64
 #   endif
 #   if defined(DR_HOST_X64)
 #       define X64

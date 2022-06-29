@@ -679,6 +679,30 @@ typedef union _dr_simd_t {
            * if architecture supports.                               \
            */
 
+#elif defined(RISCV64)
+/**
+ * TODO: riscv64
+ */
+typedef union ALIGN_VAR(16) _dr_simd_t {
+    byte b;      /**< Bottom  8 bits of Vn == Bn. */
+    ushort h;    /**< Bottom 16 bits of Vn == Hn. */
+    uint s;      /**< Bottom 32 bits of Vn == Sn. */
+    uint d[2];   /**< Bottom 64 bits of Vn == Dn as d[1]:d[0]. */
+    uint q[4];   /**< 128-bit Qn as q[3]:q[2]:q[1]:q[0]. */
+    uint u32[4]; /**< The full 128-bit register. */
+} dr_simd_t;
+
+#  define MCXT_NUM_SIMD_SLOTS                                  \
+     32 /**< Number of 128-bit SIMD Vn slots in dr_mcontext_t \
+                */
+#  define PRE_SIMD_PADDING                                       \
+     0 /**< Bytes of padding before xmm/ymm dr_mcontext_t slots \
+           */
+#  define MCXT_NUM_OPMASK_SLOTS                                    \
+     0 /**< Number of 16-64-bit OpMask Kn slots in dr_mcontext_t, \
+           * if architecture supports.                               \
+           */
+
 #elif defined(X86)
 
 /* If this is increased, you'll probably need to increase the size of
@@ -715,7 +739,7 @@ typedef union _dr_simd_t {
 #    define MCXT_NUM_OPMASK_SLOTS 8
 #else
 #    error NYI
-#endif /* AARCHXX/X86 */
+#endif /* AARCHXX/RISCV64/X86 */
 
 #ifdef DR_NUM_SIMD_SLOTS_COMPATIBILITY
 

@@ -41,7 +41,9 @@ START_FILE
  * have a relocation reachability error if we include it here (i#4304), so
  * we limit its use in drlibc to x86 or arm.
  */
-#ifndef AARCH64
+// TODO: riscv64
+// TODO: skip riscv64 for fake support
+#if !defined(AARCH64) && !defined(RISCV64)
 DECL_EXTERN(d_r_internal_error)
 
 /* For debugging: report an error if the function called by call_switch_stack()

@@ -105,6 +105,10 @@
                              */
 #        define LIB_SEG_TLS DR_REG_TPIDRURO /* libc+loader tls */
 #    endif                                  /* 64/32-bit */
+#elif defined(RISCV64)
+/* TODO: riscv64 */
+#        define SEG_TLS DR_REG_TPIDRRO_EL0   /* DR_REG_TPIDRURO, but we can't use it */
+#        define LIB_SEG_TLS DR_REG_TPIDR_EL0 /* DR_REG_TPIDRURW, libc+loader tls */
 #endif                                      /* X86/ARM */
 
 #define TLS_REG_LIB LIB_SEG_TLS /* TLS reg commonly used by libraries in Linux */
@@ -115,6 +119,8 @@
 #elif defined(ARM)
 #    define DR_REG_SYSNUM DR_REG_R7
 #elif defined(AARCH64)
+#    define DR_REG_SYSNUM DR_REG_X8
+#elif defined(RISCV64)
 #    define DR_REG_SYSNUM DR_REG_X8
 #else
 #    error NYI
@@ -295,7 +301,12 @@ disable_env(const char *name);
 #        define DECLARE_DATA_SECTION(name, wx)     \
             asm(".section " name ", \"a" wx "\""); \
             asm(".align 12"); /* 2^12 */
-#    endif                    /* X86/ARM */
+#    elif defined(DR_HOST_RISCV64)
+/* TODO: riscv64 */
+#        define DECLARE_DATA_SECTION(name, wx)     \
+            asm(".section " name ", \"a" wx "\""); \
+            asm(".align 12"); /* 2^12 */
+#    endif                    /* X86/ARM/RISCV64 */
 #endif                        /* MACOS/UNIX */
 
 /* XXX i#465: It's unclear what section we should switch to after our section
@@ -320,7 +331,12 @@ disable_env(const char *name);
             asm(".section .data");              \
             asm(".align 12");                   \
             asm(".text");
-#    endif /* X86/ARM */
+#    elif defined(DR_HOST_RISCV64)
+#        define END_DATA_SECTION_DECLARATIONS() \
+            asm(".section .data");              \
+            asm(".align 12");                   \
+            asm(".text");
+#    endif /* X86/ARM/RISCV64 */
 #endif
 
 /* the VAR_IN_SECTION macro change where each var goes */

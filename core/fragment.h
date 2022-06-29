@@ -182,6 +182,7 @@
      FRAG_SHARED | FRAG_TEMP_PRIVATE)
 
 /* FRAG_IS_X86_TO_X64 is in x64 mode */
+/* TODO: riscv64 ?*/
 #define FRAG_ISA_MODE(flags)                                                        \
     IF_X86_ELSE(                                                                    \
         IF_X64_ELSE((FRAG_IS_32(flags)) ? DR_ISA_IA32 : DR_ISA_AMD64, DR_ISA_IA32), \
@@ -209,10 +210,15 @@ frag_flags_from_isa_mode(dr_isa_mode_t mode)
         return FRAG_THUMB;
     ASSERT(mode == DR_ISA_ARM_A32);
     return 0;
+#elif defined(RISCV64)
+    /* TODO: riscv64 ?*/
+    ASSERT(mode == DR_ISA_RISCV64);
+    return 0;
 #endif
 }
 
 /* to save space size field is a ushort => maximum fragment size */
+/* TODO: riscv64 ?*/
 #ifndef AARCH64
 enum { MAX_FRAGMENT_SIZE = USHRT_MAX };
 #else

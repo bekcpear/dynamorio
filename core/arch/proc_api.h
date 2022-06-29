@@ -175,6 +175,23 @@ typedef struct {
 } features_t;
 typedef enum { AA64ISAR0 = 0, AA64ISAR1 = 1, AA64PFR0 = 2 } feature_reg_idx_t;
 #endif
+#ifdef RISCV64
+/*
+ * TODO: riscv64
+ * TODO: this is a copy of AARCHXX
+ */
+/**
+ * For AArch64 this struct holds features registers' values read by MRS instructions.
+ * Used by proc_get_all_feature_bits().
+ */
+typedef struct {
+    uint64 flags_aa64isar0; /**< AArch64 feature flags stored in ID_AA64ISAR0_EL1 */
+    uint64 flags_aa64isar1; /**< AArch64 feature flags stored in ID_AA64ISAR1_EL1 */
+    uint64 flags_aa64pfr0;  /**< AArch64 feature flags stored in ID_AA64PFR0_EL1 */
+} features_t;
+typedef enum { AA64ISAR0 = 0, AA64ISAR1 = 1, AA64PFR0 = 2 } feature_reg_idx_t;
+#endif
+
 
 #ifdef X86
 /**
@@ -322,6 +339,56 @@ typedef enum {
     FEATURE_FP16 = DEF_FEAT(AA64PFR0, 3, 1, 1),  /**< Half-precision FP (AArch64) */
 } feature_bit_t;
 #endif
+
+#ifdef RISCV64
+/*
+ * TODO: riscv64
+ * TODO: this is a copy of AARCHXX
+ */
+/* On Arm, architectural features are defined and stored very differently from
+ * X86. Specifically:
+ * - There are multiple 64 bit system registers for features storage only, FREG.
+ * - Each register is divided into nibbles representing a feature, NIBPOS.
+ * - The value of a nibble represents a certain level of support for that feature, FVAL.
+ * - The values can range from 0 to 15. In most cases 0 means a feature is not
+ *   supported at all but in some cases 15 means a feature is not supported at
+ *   all, NSFLAG.
+ * The helper macro below packs feature data into 16 bits (ushort).
+ */
+#    define DEF_FEAT(FREG, NIBPOS, FVAL, NSFLAG) \
+        ((ushort)((NSFLAG << 15) | (FREG << 8) | (NIBPOS << 4) | FVAL))
+/**
+ * Feature bits returned by cpuid for X86 and mrs for AArch64. Pass one of
+ * these values to proc_has_feature() to determine whether the underlying
+ * processor has the feature.
+ */
+typedef enum {
+    /* Feature values returned in ID_AA64ISAR0_EL1 Instruction Set Attribute
+     * Register 0
+     */
+    FEATURE_AESX = DEF_FEAT(AA64ISAR0, 1, 1, 0),     /**< AES<x> (AArch64) */
+    FEATURE_PMULL = DEF_FEAT(AA64ISAR0, 1, 2, 0),    /**< PMULL/PMULL2 (AArch64) */
+    FEATURE_SHA1 = DEF_FEAT(AA64ISAR0, 2, 1, 0),     /**< SHA1<x> (AArch64) */
+    FEATURE_SHA256 = DEF_FEAT(AA64ISAR0, 3, 1, 0),   /**< SHA256<x> (AArch64) */
+    FEATURE_SHA512 = DEF_FEAT(AA64ISAR0, 3, 2, 0),   /**< SHA512<x> (AArch64) */
+    FEATURE_CRC32 = DEF_FEAT(AA64ISAR0, 4, 1, 0),    /**< CRC32<x> (AArch64) */
+    FEATURE_LSE = DEF_FEAT(AA64ISAR0, 5, 2, 0),      /**< Atomic instructions (AArch64) */
+    FEATURE_RDM = DEF_FEAT(AA64ISAR0, 7, 1, 0),      /**< SQRDMLAH,SQRDMLSH (AArch64) */
+    FEATURE_SHA3 = DEF_FEAT(AA64ISAR0, 8, 1, 0),     /**< EOR3,RAX1,XAR,BCAX (AArch64) */
+    FEATURE_SM3 = DEF_FEAT(AA64ISAR0, 9, 1, 0),      /**< SM3<x> (AArch64) */
+    FEATURE_SM4 = DEF_FEAT(AA64ISAR0, 10, 1, 0),     /**< SM4E, SM4EKEY (AArch64) */
+    FEATURE_DotProd = DEF_FEAT(AA64ISAR0, 11, 1, 0), /**< UDOT, SDOT (AArch64) */
+    FEATURE_FHM = DEF_FEAT(AA64ISAR0, 12, 1, 0),     /**< FMLAL, FMLSL (AArch64) */
+    FEATURE_FlagM = DEF_FEAT(AA64ISAR0, 13, 1, 0),   /**< CFINV,RMIF,SETF<x> (AArch64) */
+    FEATURE_FlagM2 = DEF_FEAT(AA64ISAR0, 13, 2, 0),  /**< AXFLAG, XAFLAG (AArch64) */
+    FEATURE_RNG = DEF_FEAT(AA64ISAR0, 15, 1, 0),     /**< RNDR, RNDRRS (AArch64) */
+    /* FIXME i#5474: Define all FEATURE_s for ID_AA64ISAR1_EL1 and ID_AA64PFR0_EL1. */
+    FEATURE_DPB = DEF_FEAT(AA64ISAR1, 0, 1, 0),  /**< DC CVAP (AArch64) */
+    FEATURE_DPB2 = DEF_FEAT(AA64ISAR1, 0, 2, 0), /**< DC CVAP, DC CVADP (AArch64) */
+    FEATURE_FP16 = DEF_FEAT(AA64PFR0, 3, 1, 1),  /**< Half-precision FP (AArch64) */
+} feature_bit_t;
+#endif
+
 
 /* Make sure to keep this in sync with proc_get_cache_size_str() in proc.c. */
 /**

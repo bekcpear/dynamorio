@@ -39,7 +39,7 @@
  *
  */
 /* clang-format off */
-#ifdef AARCHXX
+#if defined(AARCHXX)
     /* We want to simplify things by keeping this in register lists order.
      * We also want registers used by ibl to be placed together to fit on
      * the same 32-byte cache line, whether on a 32-bit or 64-bit machine,
@@ -51,6 +51,95 @@
      * dcontext->local_state->spill_space.reg_stolen, and the mcontext slot
      * actually holds DR's TLS base just due to a quirk of how fcache_enter
      * operates.
+     */
+    reg_t r0;   /**< The r0 register. */
+    reg_t r1;   /**< The r1 register. */
+    reg_t r2;   /**< The r2 register. */
+    reg_t r3;   /**< The r3 register. */
+    reg_t r4;   /**< The r4 register. */
+    reg_t r5;   /**< The r5 register. */
+    reg_t r6;   /**< The r6 register. */
+    reg_t r7;   /**< The r7 register. */
+    reg_t r8;   /**< The r8 register. */
+    reg_t r9;   /**< The r9 register. */
+    reg_t r10;  /**< The r10 register. */
+    reg_t r11;  /**< The r11 register. */
+    reg_t r12;  /**< The r12 register. */
+#    ifdef X64 /* 64-bit */
+    reg_t r13;  /**< The r13 register. */
+    reg_t r14;  /**< The r14 register. */
+    reg_t r15;  /**< The r15 register. */
+    reg_t r16;  /**< The r16 register. \note For 64-bit DR builds only. */
+    reg_t r17;  /**< The r17 register. \note For 64-bit DR builds only. */
+    reg_t r18;  /**< The r18 register. \note For 64-bit DR builds only. */
+    reg_t r19;  /**< The r19 register. \note For 64-bit DR builds only. */
+    reg_t r20;  /**< The r20 register. \note For 64-bit DR builds only. */
+    reg_t r21;  /**< The r21 register. \note For 64-bit DR builds only. */
+    reg_t r22;  /**< The r22 register. \note For 64-bit DR builds only. */
+    reg_t r23;  /**< The r23 register. \note For 64-bit DR builds only. */
+    reg_t r24;  /**< The r24 register. \note For 64-bit DR builds only. */
+    reg_t r25;  /**< The r25 register. \note For 64-bit DR builds only. */
+    reg_t r26;  /**< The r26 register. \note For 64-bit DR builds only. */
+    reg_t r27;  /**< The r27 register. \note For 64-bit DR builds only. */
+    reg_t r28;  /**< The r28 register. \note For 64-bit DR builds only. */
+    reg_t r29;  /**< The r29 register. \note For 64-bit DR builds only. */
+    union {
+        reg_t r30; /**< The r30 register. \note For 64-bit DR builds only. */
+        reg_t lr;  /**< The link register. */
+    }; /**< The anonymous union of alternative names for r30/lr register. */
+    union {
+        reg_t r31; /**< The r31 register. \note For 64-bit DR builds only. */
+        reg_t sp;  /**< The stack pointer register. */
+        reg_t xsp; /**< The platform-independent name for the stack pointer register. */
+    }; /**< The anonymous union of alternative names for r31/sp register. */
+    /**
+     * The program counter.
+     * \note This field is not always set or read by all API routines.
+     */
+    byte *pc;
+    union {
+        uint xflags; /**< The platform-independent name for condition flags. */
+        struct {
+            uint nzcv; /**< Condition flags (status register). */
+            uint fpcr; /**< Floating-Point Control Register. */
+            uint fpsr; /**< Floating-Point Status Register. */
+        }; /**< AArch64 flag registers. */
+    }; /**< The anonymous union of alternative names for flag registers. */
+#    else /* 32-bit */
+    union {
+        reg_t r13; /**< The r13 register. */
+        reg_t sp;  /**< The stack pointer register.*/
+        reg_t xsp; /**< The platform-independent name for the stack pointer register. */
+    }; /**< The anonymous union of alternative names for r13/sp register. */
+    union {
+        reg_t r14; /**< The r14 register. */
+        reg_t lr;  /**< The link register. */
+    }; /**< The anonymous union of alternative names for r14/lr register. */
+    /**
+     * The anonymous union of alternative names for r15/pc register.
+     * \note This field is not always set or read by all API routines.
+     */
+    union {
+        reg_t r15; /**< The r15 register. */
+        byte *pc;  /**< The program counter. */
+    };
+    union {
+        uint xflags; /**< The platform-independent name for full APSR register. */
+        uint apsr; /**< The application program status registers in AArch32. */
+        uint cpsr; /**< The current program status registers in AArch32. */
+    }; /**< The anonymous union of alternative names for apsr/cpsr register. */
+#    endif /* 64/32-bit */
+    /**
+     * The SIMD registers.  We would probably be ok if we did not preserve the
+     * callee-saved registers (q4-q7 == d8-d15) but to be safe we preserve them
+     * all.  We do not need anything more than word alignment for OP_vldm/OP_vstm,
+     * and dr_simd_t has no fields larger than 32 bits, so we have no padding.
+     */
+    dr_simd_t simd[MCXT_NUM_SIMD_SLOTS];
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCHXX
      */
     reg_t r0;   /**< The r0 register. */
     reg_t r1;   /**< The r1 register. */
@@ -272,4 +361,4 @@
     };
     /** Storage for #MCXT_NUM_OPMASK_SLOTS mask registers as part of AVX-512. */
     dr_opmask_t opmask[MCXT_NUM_OPMASK_SLOTS];
-#endif /* ARM/X86 */
+#endif /* ARM/RISCV64/X86 */

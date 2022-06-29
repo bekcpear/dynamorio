@@ -183,8 +183,29 @@ opnd_is_far_rel_addr(opnd_t opnd)
 {
     return false;
 }
+
+#        elif defined(RISCV64)
+/*
+ * TODO: riscv64
+ * TODO: this is a copy of AARCHXX
+ */
+
+INSTR_INLINE
+bool
+opnd_is_near_rel_addr(opnd_t opnd)
+{
+    return opnd_is_rel_addr(opnd);
+}
+
+INSTR_INLINE
+bool
+opnd_is_far_rel_addr(opnd_t opnd)
+{
+    return false;
+}
+
 #        endif
-#    endif /* X64 || ARM */
+#    endif /* X64 || ARM || RISCV64 */
 
 /* opnd_t constructors */
 
