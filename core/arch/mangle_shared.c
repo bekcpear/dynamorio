@@ -217,9 +217,11 @@ prepare_for_clean_call(dcontext_t *dcontext, clean_call_info_t *cci, instrlist_t
                                    dcontext, SCRATCH_REG0, XSP_OFFSET, OPSZ_PTR),
                                opnd_create_reg(SCRATCH_REG1)));
 #else
+/* TODO: riscv64? */
         PRE(ilist, instr,
             instr_create_save_to_dc_via_reg(dcontext, SCRATCH_REG0, REG_XSP, XSP_OFFSET));
 #endif
+/* TODO: riscv64? */
         /* DSTACK_OFFSET isn't within the upcontext so if it's separate this won't
          * work right.  FIXME - the dcontext accessing routines are a mess of shared
          * vs. no shared support, separate context vs. no separate context support etc. */
@@ -255,6 +257,7 @@ prepare_for_clean_call(dcontext_t *dcontext, clean_call_info_t *cci, instrlist_t
             instr_create_restore_from_dc_via_reg(dcontext, SCRATCH_REG0, REG_XSP,
                                                  DSTACK_OFFSET));
 #endif
+/* TODO: riscv64? */
         /* Restore SCRATCH_REG0 before pushing the context on the dstack. */
         PRE(ilist, instr,
             instr_create_restore_from_tls(dcontext, SCRATCH_REG0, TLS_REG0_SLOT));
@@ -414,6 +417,7 @@ cleanup_after_clean_call(dcontext_t *dcontext, clean_call_info_t *cci, instrlist
             instr_create_restore_from_dc_via_reg(dcontext, SCRATCH_REG0, REG_XSP,
                                                  XSP_OFFSET));
 #endif
+/* TODO: riscv64? */
         PRE(ilist, instr,
             instr_create_restore_from_tls(dcontext, SCRATCH_REG0, TLS_REG0_SLOT));
     } else {
@@ -485,6 +489,7 @@ insert_meta_call_vargs(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
                     dcontext, SCRATCH_REG0, WHEREAMI_OFFSET, (uint)DR_WHERE_CLEAN_CALLEE,
                     OPSZ_4));
 #endif
+/* TODO: riscv64? */
         } else {
             PRE(ilist, instr,
                 XINST_CREATE_store(
@@ -546,6 +551,7 @@ insert_meta_call_vargs(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
                 instr_create_save_immed_to_dc_via_reg(dcontext, SCRATCH_REG0,
                                                       WHEREAMI_OFFSET, whereami, OPSZ_4));
 #endif
+/* TODO: riscv64? */
         } else {
             PRE(ilist, instr,
                 XINST_CREATE_store(
@@ -746,6 +752,7 @@ mangle_syscall_code(dcontext_t *dcontext, fragment_t *f, byte *pc, bool skip)
 #    else
             skip_pc = prev_pc;
 #    endif
+/* TODO: riscv64? */
         } else if (instr_get_opcode(&instr) == OP_jmp) {
 #    ifdef ARM
             /* For A32, both skip_pc and cti_pc are an OP_jmp instr. */
@@ -875,6 +882,7 @@ mangle_rseq_write_exit_reason(dcontext_t *dcontext, instrlist_t *ilist,
     insert_mov_immed_ptrsz(dcontext, EXIT_REASON_RSEQ_ABORT, opnd_create_reg(scratch2),
                            ilist, insert_at, NULL, NULL);
 #    endif
+     /* TODO: riscv64? */
     PRE(ilist, insert_at,
         XINST_CREATE_store_2bytes(dcontext,
                                   opnd_create_dcontext_field_via_reg_sz(
@@ -885,6 +893,7 @@ mangle_rseq_write_exit_reason(dcontext_t *dcontext, instrlist_t *ilist,
     PRE(ilist, insert_at,
         instr_create_restore_from_tls(dcontext, scratch2, TLS_REG2_SLOT));
 #    endif
+     /* TODO: riscv64? */
     if (SCRATCH_ALWAYS_TLS()) {
         PRE(ilist, insert_at,
             instr_create_restore_from_tls(dcontext, scratch_reg, TLS_REG1_SLOT));
@@ -1255,6 +1264,7 @@ mangle_rseq_nop_store(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr)
         return false;
     }
 #    endif
+     /* TODO: riscv64? */
     if (instr_num_dsts(instr) > 1) {
         REPORT_FATAL_ERROR_AND_EXIT(RSEQ_BEHAVIOR_UNSUPPORTED, 3, get_application_name(),
                                     get_application_pid(),
@@ -1571,6 +1581,7 @@ d_r_mangle(dcontext_t *dcontext, instrlist_t *ilist, uint *flags INOUT, bool man
             continue;
         }
 #endif
+/* TODO: riscv64? */
 
 #if defined(X64) || defined(ARM)
         /* XXX i#1834: We do not limit mangling of pc-relative operands to app instrs,
@@ -1604,6 +1615,7 @@ d_r_mangle(dcontext_t *dcontext, instrlist_t *ilist, uint *flags INOUT, bool man
             continue;
         }
 #endif /* ARM || AARCH64 */
+/* TODO: riscv64? */
 
 #ifdef AARCH64
         if (!instr_is_meta(instr) && instr_writes_thread_register(instr) &&
@@ -1613,6 +1625,7 @@ d_r_mangle(dcontext_t *dcontext, instrlist_t *ilist, uint *flags INOUT, bool man
             continue;
         }
 #endif
+/* TODO: riscv64? */
 #ifdef AARCHXX
         if (instr_is_app(instr) &&
             (instr_is_exclusive_load(instr) || instr_is_exclusive_store(instr) ||
@@ -1625,10 +1638,12 @@ d_r_mangle(dcontext_t *dcontext, instrlist_t *ilist, uint *flags INOUT, bool man
             } /* Else, fall through. */
         }
 #endif
+/* TODO: riscv64? */
 #ifdef AARCH64
         if (!instr_is_meta(instr) && instr_uses_reg(instr, dr_reg_stolen))
             next_instr = mangle_special_registers(dcontext, ilist, instr, next_instr);
 #endif
+/* TODO: riscv64? */
 #ifdef ARM
         /* Our stolen reg model is to expose to the client.  We assume that any
          * meta instrs using it are using it as TLS.  Ditto w/ use of PC.

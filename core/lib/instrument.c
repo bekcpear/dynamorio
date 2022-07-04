@@ -4567,6 +4567,7 @@ dr_get_dr_segment_base(IN reg_id_t seg)
     else
         return NULL;
 #else
+/* TODO: riscv64? */
     return get_segment_base(seg);
 #endif
 }
@@ -5423,7 +5424,14 @@ static const reg_id_t SPILL_SLOT_MC_REG[NUM_SPILL_SLOTS - NUM_TLS_SPILL_SLOTS] =
 #elif defined(AARCHXX)
     /* DR_REG_R0 is not used here. See prepare_for_clean_call. */
     DR_REG_R6, DR_REG_R5, DR_REG_R4, DR_REG_R3, DR_REG_R2, DR_REG_R1
-#endif /* X86/ARM */
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCHXX
+     */
+    /* DR_REG_R0 is not used here. See prepare_for_clean_call. */
+    DR_REG_R6, DR_REG_R5, DR_REG_R4, DR_REG_R3, DR_REG_R2, DR_REG_R1
+#endif /* X86/ARM/RISCV64 */
 };
 
 DR_API void
@@ -5440,6 +5448,7 @@ dr_save_reg(void *drcontext, instrlist_t *ilist, instr_t *where, reg_id_t reg,
 #ifdef AARCH64
     CLIENT_ASSERT(reg != DR_REG_XSP, "dr_save_reg: store from XSP is not supported");
 #endif
+/* TODO: riscv64? */
 
     if (slot <= SPILL_SLOT_TLS_MAX) {
         ushort offs = os_tls_offset(SPILL_SLOT_TLS_OFFS[slot]);
@@ -5486,6 +5495,7 @@ dr_restore_reg(void *drcontext, instrlist_t *ilist, instr_t *where, reg_id_t reg
 #ifdef AARCH64
     CLIENT_ASSERT(reg != DR_REG_XSP, "dr_restore_reg: load into XSP is not supported");
 #endif
+/* TODO: riscv64? */
 
     if (slot <= SPILL_SLOT_TLS_MAX) {
         ushort offs = os_tls_offset(SPILL_SLOT_TLS_OFFS[slot]);
@@ -5752,7 +5762,18 @@ dr_save_arith_flags_to_reg(void *drcontext, instrlist_t *ilist, instr_t *where,
     MINSERT(
         ilist, where,
         INSTR_CREATE_mrs(dcontext, opnd_create_reg(reg), opnd_create_reg(DR_REG_NZCV)));
-#endif /* X86/ARM/AARCH64 */
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCH64
+     */
+    /* flag saving code: mrs reg, nzcv
+    MINSERT(
+        ilist, where,
+        INSTR_CREATE_mrs(dcontext, opnd_create_reg(reg), opnd_create_reg(DR_REG_NZCV)));
+        */
+    (void) dcontext;
+#endif /* X86/ARM/AARCH64/RISCV64 */
 }
 
 DR_API void
@@ -5787,7 +5808,18 @@ dr_restore_arith_flags_from_reg(void *drcontext, instrlist_t *ilist, instr_t *wh
     MINSERT(
         ilist, where,
         INSTR_CREATE_msr(dcontext, opnd_create_reg(DR_REG_NZCV), opnd_create_reg(reg)));
-#endif /* X86/ARM/AARCH64 */
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCH64
+     */
+    /* flag restoring code: mrs reg, nzcv
+    MINSERT(
+        ilist, where,
+        INSTR_CREATE_msr(dcontext, opnd_create_reg(DR_REG_NZCV), opnd_create_reg(reg)));
+        */
+    (void) dcontext;
+#endif /* X86/ARM/AARCH64/RISCV64 */
 }
 
 DR_API reg_t
@@ -5802,6 +5834,13 @@ dr_merge_arith_flags(reg_t cur_xflags, reg_t saved_xflag)
     cur_xflags |= sahf;
     if (TEST(1, saved_xflag)) /* seto */
         cur_xflags |= EFLAGS_OF;
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCHXX
+     */
+    cur_xflags &= ~(EFLAGS_ARITH);
+    cur_xflags |= saved_xflag;
 #endif
 
     return cur_xflags;
@@ -6413,6 +6452,7 @@ dr_get_mcontext_priv(dcontext_t *dcontext, dr_mcontext_t *dmc, priv_mcontext_t *
         }
     }
 #endif
+/* TODO: riscv64? */
 
     /* XXX: should we set the pc field?
      * If we do we'll have to adopt a different solution for i#1685 in our Windows
@@ -6476,6 +6516,7 @@ dr_set_mcontext(void *drcontext, dr_mcontext_t *context)
         reg_val = get_stolen_reg_val(state);
     }
 #endif
+/* TODO: riscv64? */
     if (!dr_mcontext_to_priv_mcontext(state, context))
         return false;
 #ifdef AARCHXX
@@ -6484,6 +6525,7 @@ dr_set_mcontext(void *drcontext, dr_mcontext_t *context)
         set_stolen_reg_val(state, reg_val);
     }
 #endif
+/* TODO: riscv64? */
 
     if (TEST(DR_MC_CONTROL, context->flags)) {
         /* esp will be restored from a field in the dcontext */
@@ -7278,6 +7320,7 @@ dr_insert_get_stolen_reg_value(void *drcontext, instrlist_t *ilist, instr_t *ins
     instrlist_meta_preinsert(
         ilist, instr, instr_create_restore_from_tls(drcontext, reg, TLS_REG_STOLEN_SLOT));
 #endif
+/* TODO: riscv64? */
     return true;
 }
 
@@ -7295,6 +7338,7 @@ dr_insert_set_stolen_reg_value(void *drcontext, instrlist_t *ilist, instr_t *ins
     instrlist_meta_preinsert(
         ilist, instr, instr_create_save_to_tls(drcontext, reg, TLS_REG_STOLEN_SLOT));
 #endif
+/* TODO: riscv64? */
     return true;
 }
 

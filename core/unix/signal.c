@@ -229,6 +229,7 @@ typedef struct _clone_record_t {
      */
     void *app_lib_tls_base;
 #endif
+/* TODO: riscv64? */
     /* we leave some padding at base of stack for dynamorio_clone
      * to store values
      */
@@ -849,6 +850,7 @@ create_clone_record(dcontext_t *dcontext, reg_t *app_thread_xsp)
         ? os_get_app_tls_base(dcontext, TLS_REG_LIB)
         : NULL;
 #endif
+/* TODO: riscv64? */
     LOG(THREAD, LOG_ASYNCH, 1, "create_clone_record: thread " TIDFMT ", pc " PFX "\n",
         record->caller_id, record->continuation_pc);
 
@@ -993,6 +995,7 @@ set_app_lib_tls_base_from_clone_record(dcontext_t *dcontext, void *record)
     }
 }
 #endif
+/* TODO: riscv64? */
 
 void
 restore_clone_param_from_clone_record(dcontext_t *dcontext, void *record)
@@ -2767,6 +2770,12 @@ sig_full_initialize(sig_full_cxt_t *sc_full, kernel_ucontext_t *ucxt)
     sc_full->fp_simd_state = &ucxt->coproc.uc_vfp;
 #elif defined(AARCH64)
     sc_full->fp_simd_state = &ucxt->uc_mcontext.__reserved;
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCH64
+     */
+    sc_full->fp_simd_state = &ucxt->uc_mcontext.__reserved;
 #else
     ASSERT_NOT_IMPLEMENTED(false);
 #endif
@@ -2838,7 +2847,20 @@ sigcontext_to_mcontext(priv_mcontext_t *mc, sig_full_cxt_t *sc_full,
 #    ifdef X64
 #        error NYI on AArch64
 #    endif /* X64 */
-#endif     /* X86/ARM */
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCH64
+     */
+    if (TEST(DR_MC_INTEGER, flags))
+        memcpy(&mc->r0, &sc->SC_FIELD(regs[0]), sizeof(mc->r0) * 31);
+    if (TEST(DR_MC_CONTROL, flags)) {
+        /* XXX i#2710: the link register should be under DR_MC_CONTROL */
+        mc->sp = sc->SC_FIELD(sp);
+        mc->pc = (void *)sc->SC_FIELD(pc);
+        mc->nzcv = sc->SC_FIELD(pstate);
+    }
+#endif     /* X86/ARM/RISCV64 */
     if (TEST(DR_MC_MULTIMEDIA, flags))
         sigcontext_to_mcontext_simd(mc, sc_full);
 }
@@ -2926,7 +2948,21 @@ mcontext_to_sigcontext(sig_full_cxt_t *sc_full, priv_mcontext_t *mc,
 #    ifdef X64
 #        error NYI on AArch64
 #    endif /* X64 */
-#endif     /* X86/ARM */
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCH64
+     */
+    if (TEST(DR_MC_INTEGER, flags)) {
+        memcpy(&sc->SC_FIELD(regs[0]), &mc->r0, sizeof(mc->r0) * 31);
+    }
+    if (TEST(DR_MC_CONTROL, flags)) {
+        /* XXX i#2710: the link register should be under DR_MC_CONTROL */
+        sc->SC_FIELD(sp) = mc->sp;
+        sc->SC_FIELD(pc) = (ptr_uint_t)mc->pc;
+        sc->SC_FIELD(pstate) = mc->nzcv;
+    }
+#endif     /* X86/ARM/RISCV64 */
     if (TEST(DR_MC_MULTIMEDIA, flags))
         mcontext_to_sigcontext_simd(sc_full, mc);
 }
@@ -2989,6 +3025,7 @@ set_sigcontext_isa_mode(sig_full_cxt_t *sc_full, dr_isa_mode_t isa_mode)
 }
 #    endif
 #endif
+/* TODO: riscv64? */
 
 /* Returns whether successful.  If avoid_failure, tries to translate
  * at least pc if not successful.  Pass f if known.
@@ -3143,7 +3180,14 @@ thread_set_self_context(void *cxt)
 #elif defined(ARM)
     asm("ldr  " ASM_XSP ", %0" : : "m"(xsp_for_sigreturn));
     asm("b    dynamorio_sigreturn");
-#endif /* X86/AARCH64/ARM */
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCH64
+     */
+    asm("mv  " ASM_XSP ", %0" : : "r"(xsp_for_sigreturn));
+    asm("b    dynamorio_sigreturn");
+#endif /* X86/AARCH64/ARM/RISCV64 */
     ASSERT_NOT_REACHED();
 }
 
@@ -3224,6 +3268,7 @@ sig_has_restorer(thread_sig_info_t *info, int sig)
      */
     return false;
 #    endif
+     /* TODO: riscv64? */
     if (info->sighand->action[sig]->restorer == NULL)
         return false;
     /* we cache the result due to the safe_read cost */
@@ -3251,6 +3296,16 @@ sig_has_restorer(thread_sig_info_t *info, int sig)
             0xad, 0x70, 0xa0, 0xe3, 0x00, 0x00, 0x00, 0xef
         };
 #    elif defined(AARCH64)
+        static const byte SIGRET_NONRT[8] = { 0 }; /* unused */
+        static const byte SIGRET_RT[8] =
+            /* FIXME i#1569: untested */
+            /* mov w8, #139 ; svc #0 */
+            { 0x68, 0x11, 0x80, 0x52, 0x01, 0x00, 0x00, 0xd4 };
+#    elif defined(RISCV64)
+        /*
+         * TODO: riscv64
+         * TODO: this is a copy of AARCH64
+         */
         static const byte SIGRET_NONRT[8] = { 0 }; /* unused */
         static const byte SIGRET_RT[8] =
             /* FIXME i#1569: untested */
@@ -3943,6 +3998,7 @@ transfer_from_sig_handler_to_fcache_return(dcontext_t *dcontext, kernel_ucontext
     set_pc_mode_in_cpsr(sc, DEFAULT_ISA_MODE);
 #    endif
 #endif
+/* TODO: riscv64? */
 
 #if defined(X64) || defined(ARM)
     /* x64 always uses shared gencode */
@@ -3952,6 +4008,7 @@ transfer_from_sig_handler_to_fcache_return(dcontext_t *dcontext, kernel_ucontext
     /* X1 needs to be spilled because of br x1 in exit stubs. */
     dcontext->local_state->spill_space.r1 = sc->SC_R1;
 #    endif
+     /* TODO: riscv64? */
 #else
     get_mcontext(dcontext)->IF_X86_ELSE(xax, r0) = sc->IF_X86_ELSE(SC_XAX, SC_R0);
 #endif
@@ -4422,6 +4479,12 @@ adjust_syscall_for_restart(dcontext_t *dcontext, thread_sig_info_t *info, int si
     sc->SC_XAX = orig_retval_reg;
 #elif defined(AARCHXX)
     sc->SC_R0 = orig_retval_reg;
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCHXX
+     */
+    sc->SC_R0 = orig_retval_reg;
 #else
 #    error NYI
 #endif
@@ -4485,6 +4548,7 @@ adjust_syscall_for_restart(dcontext_t *dcontext, thread_sig_info_t *info, int si
      */
     set_sigcxt_stolen_reg(sc, dcontext->local_state->spill_space.reg_stolen);
 #endif
+/* TODO: riscv64? */
     LOG(THREAD, LOG_ASYNCH, 2, "%s: sigreturn pc is now " PFX "\n", __FUNCTION__,
         sc->SC_XIP);
     return true;
@@ -4514,6 +4578,12 @@ find_next_fragment_from_gencode(dcontext_t *dcontext, sigcontext_t *sc)
             ra_slot -= get_clean_call_temp_stack_size();
         if (d_r_safe_read(ra_slot, sizeof(retaddr), &retaddr))
             f = fragment_pclookup(dcontext, retaddr, &wrapper);
+#elif defined(RISCV64)
+        /*
+         * TODO: riscv64
+         * TODO: this is a copy of AARCHXX
+         */
+        f = fragment_pclookup(dcontext, (cache_pc)sc->SC_LR, &wrapper);
 #else
 #    error Unsupported arch.
 #endif
@@ -4576,6 +4646,13 @@ find_next_fragment_from_gencode(dcontext_t *dcontext, sigcontext_t *sc)
             f = fragment_lookup(dcontext, (app_pc)sc->SC_XBX);
         if (f == NULL && sc->SC_XCX != 0)
             f = fragment_lookup(dcontext, (app_pc)sc->SC_XCX);
+#elif defined(RISCV64)
+        /*
+         * TODO: riscv64
+         * TODO: this is a copy of AARCHXX
+         */
+        if (f == NULL && sc->SC_R2 != 0)
+            f = fragment_lookup(dcontext, ENTRY_PC_TO_DECODE_PC(sc->SC_R2));
 #else
 #    error Unsupported arch.
 #endif
@@ -6020,6 +6097,20 @@ execute_handler_from_cache(dcontext_t *dcontext, int sig, sigframe_rt_t *our_fra
         sc->SC_LR = (reg_t)info->sighand->action[sig]->restorer;
     else
         sc->SC_LR = (reg_t)dynamorio_sigreturn;
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCHXX
+     */
+    sc->SC_R0 = sig;
+    if (IS_RT_FOR_APP(info, sig)) {
+        sc->SC_R1 = (reg_t) & ((sigframe_rt_t *)xsp)->info;
+        sc->SC_R2 = (reg_t) & ((sigframe_rt_t *)xsp)->uc;
+    }
+    if (sig_has_restorer(info, sig))
+        sc->SC_LR = (reg_t)info->sighand->action[sig]->restorer;
+    else
+        sc->SC_LR = (reg_t)dynamorio_sigreturn;
 #endif
     /* Set our sigreturn context (NOT for the app: we already copied the
      * translated context to the app stack) to point to fcache_return!
@@ -6235,6 +6326,20 @@ execute_handler_from_dispatch(dcontext_t *dcontext, int sig)
         mcontext->lr = (reg_t)info->sighand->action[sig]->restorer;
     else
         mcontext->lr = (reg_t)dynamorio_sigreturn;
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCHXX
+     */
+    mcontext->r0 = sig;
+    if (IS_RT_FOR_APP(info, sig)) {
+        mcontext->r1 = (reg_t) & ((sigframe_rt_t *)xsp)->info;
+        mcontext->r2 = (reg_t) & ((sigframe_rt_t *)xsp)->uc;
+    }
+    if (sig_has_restorer(info, sig))
+        mcontext->lr = (reg_t)info->sighand->action[sig]->restorer;
+    else
+        mcontext->lr = (reg_t)dynamorio_sigreturn;
 #endif
 #ifdef X86
     /* Clear eflags DF (signal handler should match function entry ABI) */
@@ -6401,6 +6506,20 @@ execute_native_handler(dcontext_t *dcontext, int sig, sigframe_rt_t *our_frame)
     sc->SC_XSI = (reg_t) & ((sigframe_rt_t *)xsp)->info;
     sc->SC_XDX = (reg_t) & ((sigframe_rt_t *)xsp)->uc;
 #elif defined(AARCHXX)
+    sc->SC_R0 = sig;
+    if (IS_RT_FOR_APP(info, sig)) {
+        sc->SC_R1 = (reg_t) & ((sigframe_rt_t *)xsp)->info;
+        sc->SC_R2 = (reg_t) & ((sigframe_rt_t *)xsp)->uc;
+    }
+    if (sig_has_restorer(info, sig))
+        sc->SC_LR = (reg_t)info->sighand->action[sig]->restorer;
+    else
+        sc->SC_LR = (reg_t)dynamorio_sigreturn;
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCHXX
+     */
     sc->SC_R0 = sig;
     if (IS_RT_FOR_APP(info, sig)) {
         sc->SC_R1 = (reg_t) & ((sigframe_rt_t *)xsp)->info;
@@ -7163,6 +7282,7 @@ handle_sigreturn(dcontext_t *dcontext, void *ucxt_param, int style)
     set_pc_mode_in_cpsr(sc, DEFAULT_ISA_MODE);
 #        endif
 #    endif
+    /* TODO: riscv64? */
 #endif
 
     LOG(THREAD, LOG_ASYNCH, 3, "set next tag to " PFX ", sc->SC_XIP to " PFX "\n",
@@ -8045,6 +8165,18 @@ notify_and_jmp_without_stack(KSYNCH_TYPE *notify_var, byte *continuation, byte *
         asm("ldr " ASM_R2 ", %0" : : "m"(xsp));
         asm("mov " ASM_XSP ", " ASM_R2); /* Clobber xsp last (see above). */
         asm("b dynamorio_condvar_wake_and_jmp");
+#elif defined(RISCV64)
+        /*
+         * TODO: riscv64
+         * TODO: this is a copy of AARCHXX
+         */
+        asm("ldr " ASM_R0 ", %0" : : "m"(notify_var));
+        asm("mv " ASM_R1 ", #1");
+        asm("str " ASM_R1 ",[" ASM_R0 "]");
+        asm("ldr " ASM_R1 ", %0" : : "m"(continuation));
+        asm("ldr " ASM_R2 ", %0" : : "m"(xsp));
+        asm("mv " ASM_XSP ", " ASM_R2); /* Clobber xsp last (see above). */
+        asm("b dynamorio_condvar_wake_and_jmp");
 #endif
     } else {
         ksynch_set_value(notify_var, 1);
@@ -8059,7 +8191,16 @@ notify_and_jmp_without_stack(KSYNCH_TYPE *notify_var, byte *continuation, byte *
         asm("ldr " ASM_R1 ", %0" : : "m"(xsp)); /* Clobber xsp last (see above). */
         asm("mov " ASM_XSP ", " ASM_R1);
         asm(ASM_INDJMP " " ASM_R0);
-#endif /* X86/ARM */
+#elif defined(RISCV64)
+        /*
+         * TODO: riscv64
+         * TODO: this is a copy of AARCHXX
+         */
+        asm("ldr " ASM_R0 ", %0" : : "m"(continuation));
+        asm("ldr " ASM_R1 ", %0" : : "m"(xsp)); /* Clobber xsp last (see above). */
+        asm("mv " ASM_XSP ", " ASM_R1);
+        asm(ASM_INDJMP " " ASM_R0);
+#endif /* X86/ARM/RISCV64 */
     }
 }
 

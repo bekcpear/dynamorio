@@ -31,13 +31,15 @@
  */
 
 /*
- * tls_linux_arm.c - thread-local storage for arm and arm64 Linux
+ * tls_linux_riscv64.c - thread-local storage for riscv64 Linux
+ * TODO: riscv64
+ * TODO: this is just a copy of *aarchxx.c
  */
 
 #include <stddef.h> /* offsetof */
 #include "../globals.h"
 #include "tls.h"
-#ifndef AARCH64
+#ifndef RISCV64
 #    include "include/syscall.h"
 #endif
 
@@ -45,8 +47,8 @@
 #    error Linux-only
 #endif
 
-#ifndef AARCHXX
-#    error ARM/AArch64-only
+#ifndef RISCV64
+#    error RISCV64-only
 #endif
 
 byte **

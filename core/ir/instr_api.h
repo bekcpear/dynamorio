@@ -147,6 +147,31 @@ typedef enum _dr_pred_type_t {
     DR_PRED_HS = DR_PRED_CS, /**< ARM condition: alias for DR_PRED_CS. */
     DR_PRED_LO = DR_PRED_CC, /**< ARM condition: alias for DR_PRED_CC. */
 #endif
+#ifdef RISCV64
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCHXX
+     */
+    DR_PRED_EQ, /**< ARM condition: 0000 Equal                   (Z == 1)           */
+    DR_PRED_NE, /**< ARM condition: 0001 Not equal               (Z == 0)           */
+    DR_PRED_CS, /**< ARM condition: 0010 Carry set               (C == 1)           */
+    DR_PRED_CC, /**< ARM condition: 0011 Carry clear             (C == 0)           */
+    DR_PRED_MI, /**< ARM condition: 0100 Minus, negative         (N == 1)           */
+    DR_PRED_PL, /**< ARM condition: 0101 Plus, positive or zero  (N == 0)           */
+    DR_PRED_VS, /**< ARM condition: 0110 Overflow                (V == 1)           */
+    DR_PRED_VC, /**< ARM condition: 0111 No overflow             (V == 0)           */
+    DR_PRED_HI, /**< ARM condition: 1000 Unsigned higher         (C == 1 and Z == 0)*/
+    DR_PRED_LS, /**< ARM condition: 1001 Unsigned lower or same  (C == 0 or Z == 1) */
+    DR_PRED_GE, /**< ARM condition: 1010 Signed >=               (N == V)           */
+    DR_PRED_LT, /**< ARM condition: 1011 Signed less than        (N != V)           */
+    DR_PRED_GT, /**< ARM condition: 1100 Signed greater than     (Z == 0 and N == V)*/
+    DR_PRED_LE, /**< ARM condition: 1101 Signed <=               (Z == 1 or N != V) */
+    DR_PRED_AL, /**< ARM condition: 1110 Always (unconditional)                    */
+    DR_PRED_NV, /**< ARM condition: 1111 Never, meaning always                     */
+    /* Aliases */
+    DR_PRED_HS = DR_PRED_CS, /**< ARM condition: alias for DR_PRED_CS. */
+    DR_PRED_LO = DR_PRED_CC, /**< ARM condition: alias for DR_PRED_CC. */
+#endif
 } dr_pred_type_t;
 
 /**
@@ -1070,6 +1095,7 @@ DR_API
 dr_pred_type_t
 instr_invert_predicate(dr_pred_type_t pred);
 #endif
+/* TODO: riscv64? */
 
 #ifdef ARM
 DR_API
@@ -2533,6 +2559,89 @@ enum {
 #    define EFLAGS_MSR_G 0x4
 /** The bits in the 4-bit OP_msr immediate that select the nzcvqg status flags. */
 #    define EFLAGS_MSR_NZCVQG (EFLAGS_MSR_NZCVQ | EFLAGS_MSR_G)
-#endif /* X86 */
+
+#elif defined(RISCV64)
+/*
+ * TODO: riscv64
+ * TODO: this is a copy of AARCHXX
+ */
+#    define EFLAGS_READ_N 0x00000001  /**< Reads N (negative flag). */
+#    define EFLAGS_READ_Z 0x00000002  /**< Reads Z (zero flag). */
+#    define EFLAGS_READ_C 0x00000004  /**< Reads C (carry flag). */
+#    define EFLAGS_READ_V 0x00000008  /**< Reads V (overflow flag). */
+#    define EFLAGS_READ_Q 0x00000010  /**< Reads Q (saturation flag). */
+#    define EFLAGS_READ_GE 0x00000020 /**< Reads GE (>= for parallel arithmetic). */
+#    define EFLAGS_READ_NZCV \
+        (EFLAGS_READ_N | EFLAGS_READ_Z | EFLAGS_READ_C | EFLAGS_READ_V)
+/** Platform-independent macro for reads all arithmetic flags. */
+#    define EFLAGS_READ_ARITH (EFLAGS_READ_NZCV | EFLAGS_READ_Q | EFLAGS_READ_GE)
+#    define EFLAGS_READ_ALL (EFLAGS_READ_ARITH) /**< Reads all flags. */
+#    define EFLAGS_READ_NON_PRED                                         \
+        EFLAGS_READ_GE                /**< Flags not read by predicates. \
+                                       */
+#    define EFLAGS_WRITE_N 0x00000040 /**< Reads N (negative). */
+#    define EFLAGS_WRITE_Z 0x00000080 /**< Reads Z (zero). */
+#    define EFLAGS_WRITE_C 0x00000100 /**< Reads C (carry). */
+#    define EFLAGS_WRITE_V 0x00000200 /**< Reads V (overflow). */
+#    define EFLAGS_WRITE_Q 0x00000400 /**< Reads Q (saturation). */
+#    define EFLAGS_WRITE_GE                                    \
+        0x00000800 /**< Reads GE (>= for parallel arithmetic). \
+                    */
+#    define EFLAGS_WRITE_NZCV \
+        (EFLAGS_WRITE_N | EFLAGS_WRITE_Z | EFLAGS_WRITE_C | EFLAGS_WRITE_V)
+/** Platform-independent macro for writes all arithmetic flags. */
+#    define EFLAGS_WRITE_ARITH (EFLAGS_WRITE_NZCV | EFLAGS_WRITE_Q | EFLAGS_WRITE_GE)
+#    define EFLAGS_WRITE_ALL (EFLAGS_WRITE_ARITH) /**< Writes all flags. */
+
+/** Converts an EFLAGS_WRITE_* value to the corresponding EFLAGS_READ_* value. */
+#    define EFLAGS_WRITE_TO_READ(x) ((x) >> 6)
+/** Converts an EFLAGS_READ_* value to the corresponding EFLAGS_WRITE_* value. */
+#    define EFLAGS_READ_TO_WRITE(x) ((x) << 6)
+
+/**
+ * The actual bits in the CPSR that we care about:\n<pre>
+ *   31 30 29 28 27 ... 19 18 17 16 ... 5
+ *    N  Z  C  V  Q       GE[3:0]       T </pre>
+ */
+enum {
+    EFLAGS_N = 0x80000000,  /**< The bit in the CPSR register of N (negative flag). */
+    EFLAGS_Z = 0x40000000,  /**< The bit in the CPSR register of Z (zero flag). */
+    EFLAGS_C = 0x20000000,  /**< The bit in the CPSR register of C (carry flag). */
+    EFLAGS_V = 0x10000000,  /**< The bit in the CPSR register of V (overflow flag). */
+    EFLAGS_Q = 0x08000000,  /**< The bit in the CPSR register of Q (saturation flag). */
+    EFLAGS_GE = 0x000f0000, /**< The bits in the CPSR register of GE[3:0]. */
+    /** The bits in the CPSR register of N, Z, C, V, Q, and GE. */
+    EFLAGS_ARITH = EFLAGS_N | EFLAGS_Z | EFLAGS_C | EFLAGS_V | EFLAGS_Q | EFLAGS_GE,
+    /**
+     * The bit in the CPSR register of T (Thumb mode indicator bit).  This is
+     * not readable from user space and should only be examined when looking at
+     * machine state from the kernel, such as in a signal handler.
+     */
+    EFLAGS_T = 0x00000020,
+    /**
+     * The bits in the CPSR register of the T32 IT block base condition.
+     * This is not readable from user space and should only be examined when
+     * looking at machine state from the kernel, such as in a signal handler.
+     */
+    EFLAGS_IT_COND = 0x0000e000,
+    /**
+     * The bits in the CPSR register of the T32 IT block size.
+     * This is not readable from user space and should only be examined when
+     * looking at machine state from the kernel, such as in a signal handler.
+     */
+    EFLAGS_IT_SIZE = 0x06001c00,
+};
+
+/** The bits in the CPSR register of the T32 IT block state. */
+#    define EFLAGS_IT (EFLAGS_IT_COND | EFLAGS_IT_SIZE)
+
+/** The bit in the 4-bit OP_msr immediate that selects the nzcvq status flags. */
+#    define EFLAGS_MSR_NZCVQ 0x8
+/** The bit in the 4-bit OP_msr immediate that selects the apsr_g status flags. */
+#    define EFLAGS_MSR_G 0x4
+/** The bits in the 4-bit OP_msr immediate that select the nzcvqg status flags. */
+#    define EFLAGS_MSR_NZCVQG (EFLAGS_MSR_NZCVQ | EFLAGS_MSR_G)
+
+#endif /* X86/ARM/RISCV64 */
 
 #endif /* _DR_IR_INSTR_H_ */

@@ -71,6 +71,7 @@
 #ifdef AARCHXX
 #    define MAX_IMMED_IN_CMP 255
 #endif
+/* TODO: riscv64? */
 
 typedef enum {
     DRBBDUP_ENCODING_SLOT = 0, /* Used as a spill slot for dynamic case generation. */
@@ -80,6 +81,7 @@ typedef enum {
 #ifdef AARCHXX
     DRBBDUP_SCRATCH_REG2_SLOT,
 #endif
+/* TODO: riscv64? */
     DRBBDUP_SLOT_COUNT,
 } drbbdup_thread_slots_t;
 
@@ -90,6 +92,7 @@ typedef enum {
 /* RISC architectures need a 2nd scratch register. */
 #    define DRBBDUP_SCRATCH_REG2 DR_REG_R1
 #endif
+/* TODO: riscv64? */
 
 /* Special index values are used to help guide case selection. */
 #define DRBBDUP_DEFAULT_INDEX -1
@@ -112,6 +115,7 @@ typedef struct {
     bool is_scratch_reg2_needed;
     bool is_scratch_reg2_dead; /* If _needed, is DRBBDUP_SCRATCH_REG2 dead at start. */
 #endif
+/* TODO: riscv64? */
     bool is_gen; /* Denotes whether a new bb copy is dynamically being generated. */
     drbbdup_case_t default_case;
     drbbdup_case_t *cases; /* Is NULL if enable_dup is not set. */
@@ -981,6 +985,7 @@ drbbdup_insert_landing_restoration(void *drcontext, instrlist_t *bb, instr_t *wh
                                  DRBBDUP_SCRATCH_REG2);
     }
 #endif
+/* TODO: riscv64? */
 }
 
 /* Calculates hash index of a particular bb to access the hit table. */
@@ -1031,6 +1036,7 @@ drbbdup_encode_runtime_case(void *drcontext, drbbdup_per_thread *pt, void *tag,
         }
     }
 #endif
+/* TODO: riscv64? */
     if (!manager->are_flags_dead) {
         dr_save_arith_flags_to_reg(drcontext, bb, where, manager->scratch_reg);
         drbbdup_spill_register(drcontext, bb, where, DRBBDUP_FLAG_REG_SLOT,
@@ -1091,6 +1097,7 @@ drbbdup_encode_runtime_case(void *drcontext, drbbdup_per_thread *pt, void *tag,
             bb, where, XINST_CREATE_load(drcontext, scratch_reg_opnd, case_opnd));
     }
 #else
+/* TODO: riscv64? */
     /* For x86, a regular load has acquire semantics. */
     instrlist_meta_preinsert(bb, where,
                              XINST_CREATE_load(drcontext, scratch_reg_opnd, case_opnd));
@@ -1228,6 +1235,9 @@ drbbdup_insert_compare_encoding_and_branch(void *drcontext, instrlist_t *bb,
         bb, where,
         XINST_CREATE_jump_cond(drcontext, jmp_if_equal ? DR_PRED_EQ : DR_PRED_NE,
                                opnd_create_instr(jmp_label)));
+#elif defined(RISCV64)
+    /* TODO: riscv64 */
+    return;
 #endif
 }
 
@@ -1757,6 +1767,7 @@ drbbdup_prepare_redirect(dr_mcontext_t *mcontext, drbbdup_manager_t *manager,
                       (reg_t)drbbdup_get_tls_raw_slot_val(DRBBDUP_SCRATCH_REG2_SLOT));
     }
 #endif
+/* TODO: riscv64? */
 
     mcontext->pc =
         dr_app_pc_as_jump_target(dr_get_isa_mode(dr_get_current_drcontext()),

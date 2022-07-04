@@ -1110,6 +1110,7 @@ internal_instr_disassemble(char *buf, size_t bufsz, size_t *sofar INOUT,
         info = instr_get_instr_info(instr);
         name = info->name;
 #endif
+/* TODO: riscv64? */
     } else
         name = "<RAW>";
 
@@ -1149,6 +1150,7 @@ internal_instr_disassemble(char *buf, size_t bufsz, size_t *sofar INOUT,
         SYSLOG_INTERNAL_WARNING_ONCE("Selected disassembly style is not implemented for "
                                      "AArch64: no operands will be printed.");
 #endif
+/* TODO: riscv64? */
         instr_disassemble_opnds_noimplicit(buf, bufsz, sofar, dcontext, instr);
         /* we avoid trailing spaces if no operands */
         if (*sofar == offs_pre_opnds) {

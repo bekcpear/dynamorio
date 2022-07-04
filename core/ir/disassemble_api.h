@@ -88,6 +88,7 @@ typedef enum {
     DR_DISASM_ARM = 0x10,
 } dr_disasm_flags_t;
 /* TODO i#4382: Add DR_DISASM_AARCH64. */
+/* TODO: Add DR_DISASM_RISCV64. */
 
 DR_API
 /**

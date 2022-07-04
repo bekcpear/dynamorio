@@ -80,7 +80,18 @@
 #    define ASM_R3 "r3"
 #    define ASM_XSP "sp"
 #    define ASM_INDJMP "bx"
-#endif /* X86/ARM */
+#elif defined(DR_HOST_RISCV64)
+     /*
+      * TODO: riscv64
+      * TODO: this is just a copy of AARCH64
+      */
+#    define ASM_R0 "x0"
+#    define ASM_R1 "x1"
+#    define ASM_R2 "x2"
+#    define ASM_R3 "x3"
+#    define ASM_XSP "sp"
+#    define ASM_INDJMP "br"
+#endif /* X86/ARM/RISCV64 */
 
 #define MACHINE_TLS_IS_DR_TLS IF_X86_ELSE(INTERNAL_OPTION(mangle_app_seg), true)
 
@@ -222,6 +233,7 @@ os_tls_thread_exit(local_state_t *local_state);
 bool
 os_set_app_tls_base(dcontext_t *dcontext, reg_id_t reg, void *base);
 #endif
+/* TODO: riscv64? */
 
 #ifdef MACOS
 /* xref i#1404: we should expose these via the dr_get_os_version() API */

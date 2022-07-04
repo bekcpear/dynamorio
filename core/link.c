@@ -159,6 +159,7 @@ static const linkstub_t linkstub_syscall = { LINK_FAKE, 0 };
 #ifndef AARCH64
 static
 #endif
+/* TODO: riscv64? */
     const linkstub_t linkstub_selfmod = { LINK_FAKE, 0 };
 static const linkstub_t linkstub_ibl_deleted = { LINK_FAKE, 0 };
 static const linkstub_t linkstub_asynch = { LINK_FAKE, 0 };

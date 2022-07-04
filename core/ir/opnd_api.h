@@ -273,6 +273,7 @@ enum {
 #ifdef AARCH64
 #    define OPSZ_sys OPSZ_1 /**< Operand size for sys instruction memory reference. */
 #endif
+/* TODO: riscv64? */
 
 /* We encode this enum plus the OPSZ_ extensions in bytes, so we can have
  * at most 256 total DR_REG_ plus OPSZ_ values.  Currently there are 165-odd.
@@ -1126,6 +1127,10 @@ enum {
 #    endif
 
 #elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCHXX
+     */
     /* 64-bit general purpose */
     DR_REG_X0,  /**< The "x0" register. */
     DR_REG_X1,  /**< The "x1" register. */
@@ -1159,6 +1164,441 @@ enum {
     DR_REG_X29, /**< The "x29" register. */
     DR_REG_X30, /**< The "x30" register. */
     DR_REG_X31, /**< The "x31" register. */
+    DR_REG_XSP, /**< The "xsp" stack pointer register. */
+    DR_REG_XZR, /**< The "xzr" zero pseudo-register; not included in GPRs. */
+
+    /* 32-bit general purpose */
+    DR_REG_W0,  /**< The "w0" register. */
+    DR_REG_W1,  /**< The "w1" register. */
+    DR_REG_W2,  /**< The "w2" register. */
+    DR_REG_W3,  /**< The "w3" register. */
+    DR_REG_W4,  /**< The "w4" register. */
+    DR_REG_W5,  /**< The "w5" register. */
+    DR_REG_W6,  /**< The "w6" register. */
+    DR_REG_W7,  /**< The "w7" register. */
+    DR_REG_W8,  /**< The "w8" register. */
+    DR_REG_W9,  /**< The "w9" register. */
+    DR_REG_W10, /**< The "w10" register. */
+    DR_REG_W11, /**< The "w11" register. */
+    DR_REG_W12, /**< The "w12" register. */
+    DR_REG_W13, /**< The "w13" register. */
+    DR_REG_W14, /**< The "w14" register. */
+    DR_REG_W15, /**< The "w15" register. */
+    DR_REG_W16, /**< The "w16" register. */
+    DR_REG_W17, /**< The "w17" register. */
+    DR_REG_W18, /**< The "w18" register. */
+    DR_REG_W19, /**< The "w19" register. */
+    DR_REG_W20, /**< The "w20" register. */
+    DR_REG_W21, /**< The "w21" register. */
+    DR_REG_W22, /**< The "w22" register. */
+    DR_REG_W23, /**< The "w23" register. */
+    DR_REG_W24, /**< The "w24" register. */
+    DR_REG_W25, /**< The "w25" register. */
+    DR_REG_W26, /**< The "w26" register. */
+    DR_REG_W27, /**< The "w27" register. */
+    DR_REG_W28, /**< The "w28" register. */
+    DR_REG_W29, /**< The "w29" register. */
+    DR_REG_W30, /**< The "w30" register. */
+    DR_REG_WSP, /**< The "wsp" bottom half of the stack pointer register. */
+    DR_REG_WZR, /**< The "wzr" zero pseudo-register. */
+
+    /* 128-bit SIMD registers */
+    DR_REG_Q0,  /**< The "q0" register. */
+    DR_REG_Q1,  /**< The "q1" register. */
+    DR_REG_Q2,  /**< The "q2" register. */
+    DR_REG_Q3,  /**< The "q3" register. */
+    DR_REG_Q4,  /**< The "q4" register. */
+    DR_REG_Q5,  /**< The "q5" register. */
+    DR_REG_Q6,  /**< The "q6" register. */
+    DR_REG_Q7,  /**< The "q7" register. */
+    DR_REG_Q8,  /**< The "q8" register. */
+    DR_REG_Q9,  /**< The "q9" register. */
+    DR_REG_Q10, /**< The "q10" register. */
+    DR_REG_Q11, /**< The "q11" register. */
+    DR_REG_Q12, /**< The "q12" register. */
+    DR_REG_Q13, /**< The "q13" register. */
+    DR_REG_Q14, /**< The "q14" register. */
+    DR_REG_Q15, /**< The "q15" register. */
+    /* x64-only but simpler code to not ifdef it */
+    DR_REG_Q16, /**< The "q16" register. */
+    DR_REG_Q17, /**< The "q17" register. */
+    DR_REG_Q18, /**< The "q18" register. */
+    DR_REG_Q19, /**< The "q19" register. */
+    DR_REG_Q20, /**< The "q20" register. */
+    DR_REG_Q21, /**< The "q21" register. */
+    DR_REG_Q22, /**< The "q22" register. */
+    DR_REG_Q23, /**< The "q23" register. */
+    DR_REG_Q24, /**< The "q24" register. */
+    DR_REG_Q25, /**< The "q25" register. */
+    DR_REG_Q26, /**< The "q26" register. */
+    DR_REG_Q27, /**< The "q27" register. */
+    DR_REG_Q28, /**< The "q28" register. */
+    DR_REG_Q29, /**< The "q29" register. */
+    DR_REG_Q30, /**< The "q30" register. */
+    DR_REG_Q31, /**< The "q31" register. */
+    /* 64-bit SIMD registers */
+    DR_REG_D0,  /**< The "d0" register. */
+    DR_REG_D1,  /**< The "d1" register. */
+    DR_REG_D2,  /**< The "d2" register. */
+    DR_REG_D3,  /**< The "d3" register. */
+    DR_REG_D4,  /**< The "d4" register. */
+    DR_REG_D5,  /**< The "d5" register. */
+    DR_REG_D6,  /**< The "d6" register. */
+    DR_REG_D7,  /**< The "d7" register. */
+    DR_REG_D8,  /**< The "d8" register. */
+    DR_REG_D9,  /**< The "d9" register. */
+    DR_REG_D10, /**< The "d10" register. */
+    DR_REG_D11, /**< The "d11" register. */
+    DR_REG_D12, /**< The "d12" register. */
+    DR_REG_D13, /**< The "d13" register. */
+    DR_REG_D14, /**< The "d14" register. */
+    DR_REG_D15, /**< The "d15" register. */
+    DR_REG_D16, /**< The "d16" register. */
+    DR_REG_D17, /**< The "d17" register. */
+    DR_REG_D18, /**< The "d18" register. */
+    DR_REG_D19, /**< The "d19" register. */
+    DR_REG_D20, /**< The "d20" register. */
+    DR_REG_D21, /**< The "d21" register. */
+    DR_REG_D22, /**< The "d22" register. */
+    DR_REG_D23, /**< The "d23" register. */
+    DR_REG_D24, /**< The "d24" register. */
+    DR_REG_D25, /**< The "d25" register. */
+    DR_REG_D26, /**< The "d26" register. */
+    DR_REG_D27, /**< The "d27" register. */
+    DR_REG_D28, /**< The "d28" register. */
+    DR_REG_D29, /**< The "d29" register. */
+    DR_REG_D30, /**< The "d30" register. */
+    DR_REG_D31, /**< The "d31" register. */
+    /* 32-bit SIMD registers */
+    DR_REG_S0,  /**< The "s0" register. */
+    DR_REG_S1,  /**< The "s1" register. */
+    DR_REG_S2,  /**< The "s2" register. */
+    DR_REG_S3,  /**< The "s3" register. */
+    DR_REG_S4,  /**< The "s4" register. */
+    DR_REG_S5,  /**< The "s5" register. */
+    DR_REG_S6,  /**< The "s6" register. */
+    DR_REG_S7,  /**< The "s7" register. */
+    DR_REG_S8,  /**< The "s8" register. */
+    DR_REG_S9,  /**< The "s9" register. */
+    DR_REG_S10, /**< The "s10" register. */
+    DR_REG_S11, /**< The "s11" register. */
+    DR_REG_S12, /**< The "s12" register. */
+    DR_REG_S13, /**< The "s13" register. */
+    DR_REG_S14, /**< The "s14" register. */
+    DR_REG_S15, /**< The "s15" register. */
+    DR_REG_S16, /**< The "s16" register. */
+    DR_REG_S17, /**< The "s17" register. */
+    DR_REG_S18, /**< The "s18" register. */
+    DR_REG_S19, /**< The "s19" register. */
+    DR_REG_S20, /**< The "s20" register. */
+    DR_REG_S21, /**< The "s21" register. */
+    DR_REG_S22, /**< The "s22" register. */
+    DR_REG_S23, /**< The "s23" register. */
+    DR_REG_S24, /**< The "s24" register. */
+    DR_REG_S25, /**< The "s25" register. */
+    DR_REG_S26, /**< The "s26" register. */
+    DR_REG_S27, /**< The "s27" register. */
+    DR_REG_S28, /**< The "s28" register. */
+    DR_REG_S29, /**< The "s29" register. */
+    DR_REG_S30, /**< The "s30" register. */
+    DR_REG_S31, /**< The "s31" register. */
+    /* 16-bit SIMD registers */
+    DR_REG_H0,  /**< The "h0" register. */
+    DR_REG_H1,  /**< The "h1" register. */
+    DR_REG_H2,  /**< The "h2" register. */
+    DR_REG_H3,  /**< The "h3" register. */
+    DR_REG_H4,  /**< The "h4" register. */
+    DR_REG_H5,  /**< The "h5" register. */
+    DR_REG_H6,  /**< The "h6" register. */
+    DR_REG_H7,  /**< The "h7" register. */
+    DR_REG_H8,  /**< The "h8" register. */
+    DR_REG_H9,  /**< The "h9" register. */
+    DR_REG_H10, /**< The "h10" register. */
+    DR_REG_H11, /**< The "h11" register. */
+    DR_REG_H12, /**< The "h12" register. */
+    DR_REG_H13, /**< The "h13" register. */
+    DR_REG_H14, /**< The "h14" register. */
+    DR_REG_H15, /**< The "h15" register. */
+    DR_REG_H16, /**< The "h16" register. */
+    DR_REG_H17, /**< The "h17" register. */
+    DR_REG_H18, /**< The "h18" register. */
+    DR_REG_H19, /**< The "h19" register. */
+    DR_REG_H20, /**< The "h20" register. */
+    DR_REG_H21, /**< The "h21" register. */
+    DR_REG_H22, /**< The "h22" register. */
+    DR_REG_H23, /**< The "h23" register. */
+    DR_REG_H24, /**< The "h24" register. */
+    DR_REG_H25, /**< The "h25" register. */
+    DR_REG_H26, /**< The "h26" register. */
+    DR_REG_H27, /**< The "h27" register. */
+    DR_REG_H28, /**< The "h28" register. */
+    DR_REG_H29, /**< The "h29" register. */
+    DR_REG_H30, /**< The "h30" register. */
+    DR_REG_H31, /**< The "h31" register. */
+    /* 8-bit SIMD registers */
+    DR_REG_B0,  /**< The "b0" register. */
+    DR_REG_B1,  /**< The "b1" register. */
+    DR_REG_B2,  /**< The "b2" register. */
+    DR_REG_B3,  /**< The "b3" register. */
+    DR_REG_B4,  /**< The "b4" register. */
+    DR_REG_B5,  /**< The "b5" register. */
+    DR_REG_B6,  /**< The "b6" register. */
+    DR_REG_B7,  /**< The "b7" register. */
+    DR_REG_B8,  /**< The "b8" register. */
+    DR_REG_B9,  /**< The "b9" register. */
+    DR_REG_B10, /**< The "b10" register. */
+    DR_REG_B11, /**< The "b11" register. */
+    DR_REG_B12, /**< The "b12" register. */
+    DR_REG_B13, /**< The "b13" register. */
+    DR_REG_B14, /**< The "b14" register. */
+    DR_REG_B15, /**< The "b15" register. */
+    DR_REG_B16, /**< The "b16" register. */
+    DR_REG_B17, /**< The "b17" register. */
+    DR_REG_B18, /**< The "b18" register. */
+    DR_REG_B19, /**< The "b19" register. */
+    DR_REG_B20, /**< The "b20" register. */
+    DR_REG_B21, /**< The "b21" register. */
+    DR_REG_B22, /**< The "b22" register. */
+    DR_REG_B23, /**< The "b23" register. */
+    DR_REG_B24, /**< The "b24" register. */
+    DR_REG_B25, /**< The "b25" register. */
+    DR_REG_B26, /**< The "b26" register. */
+    DR_REG_B27, /**< The "b27" register. */
+    DR_REG_B28, /**< The "b28" register. */
+    DR_REG_B29, /**< The "b29" register. */
+    DR_REG_B30, /**< The "b30" register. */
+    DR_REG_B31, /**< The "b31" register. */
+
+    DR_REG_NZCV,            /**< The "nzcv" register. */
+    DR_REG_FPCR,            /**< The "fpcr" register. */
+    DR_REG_FPSR,            /**< The "fpsr" register. */
+    DR_REG_MDCCSR_EL0,      /**< The "mdccsr_el0" register. */
+    DR_REG_DBGDTR_EL0,      /**< The "dbgdtr_el0" register. */
+    DR_REG_DBGDTRRX_EL0,    /**< The "dbgdtrrx_el0" register. */
+    DR_REG_SP_EL0,          /**< The "sp_el0" register. */
+    DR_REG_SPSEL,           /**< The "spsel" register. */
+    DR_REG_DAIFSET,         /**< The "DAIFSet" register. */
+    DR_REG_DAIFCLR,         /**< The "DAIFClr" register. */
+    DR_REG_CURRENTEL,       /**< The "currentel" register. */
+    DR_REG_PAN,             /**< The "pan" register. */
+    DR_REG_UAO,             /**< The "uao" register. */
+    DR_REG_CTR_EL0,         /**< The "ctr_el0" register. */
+    DR_REG_DCZID_EL0,       /**< The "dczid_el0" register. */
+    DR_REG_RNDR,            /**< The "rndr" register. */
+    DR_REG_RNDRRS,          /**< The "rndrrs" register. */
+    DR_REG_DAIF,            /**< The "daif" register. */
+    DR_REG_DIT,             /**< The "dit" register. */
+    DR_REG_SSBS,            /**< The "ssbs" register. */
+    DR_REG_TCO,             /**< The "tco" register. */
+    DR_REG_DSPSR_EL0,       /**< The "dspsr_el0" register. */
+    DR_REG_DLR_EL0,         /**< The "dlr_el0" register. */
+    DR_REG_PMCR_EL0,        /**< The "pmcr_el0" register. */
+    DR_REG_PMCNTENSET_EL0,  /**< The "pmcntenset_el0" register. */
+    DR_REG_PMCNTENCLR_EL0,  /**< The "pmcntenclr_el0" register. */
+    DR_REG_PMOVSCLR_EL0,    /**< The "pmovsclr_el0" register. */
+    DR_REG_PMSWINC_EL0,     /**< The "pmswinc_el0" register. */
+    DR_REG_PMSELR_EL0,      /**< The "pmselr_el0" register. */
+    DR_REG_PMCEID0_EL0,     /**< The "pmceid0_el0" register. */
+    DR_REG_PMCEID1_EL0,     /**< The "pmceid1_el0" register. */
+    DR_REG_PMCCNTR_EL0,     /**< The "pmccntr_el0" register. */
+    DR_REG_PMXEVTYPER_EL0,  /**< The "pmxevtyper_el0" register. */
+    DR_REG_PMXEVCNTR_EL0,   /**< The "pmxevcntr_el0" register. */
+    DR_REG_PMUSERENR_EL0,   /**< The "pmuserenr_el0" register. */
+    DR_REG_PMOVSSET_EL0,    /**< The "pmovsset_el0" register. */
+    DR_REG_SCXTNUM_EL0,     /**< The "scxtnum_el0" register. */
+    DR_REG_CNTFRQ_EL0,      /**< The "cntfrq_el0" register. */
+    DR_REG_CNTPCT_EL0,      /**< The "cntpct_el0" register. */
+    DR_REG_CNTP_TVAL_EL0,   /**< The "cntp_tval_el0" register. */
+    DR_REG_CNTP_CTL_EL0,    /**< The "cntp_ctl_el0" register. */
+    DR_REG_CNTP_CVAL_EL0,   /**< The "cntp_cval_el0" register. */
+    DR_REG_CNTV_TVAL_EL0,   /**< The "cntv_tval_el0" register. */
+    DR_REG_CNTV_CTL_EL0,    /**< The "cntv_ctl_el0" register. */
+    DR_REG_CNTV_CVAL_EL0,   /**< The "cntv_cval_el0" register. */
+    DR_REG_PMEVCNTR0_EL0,   /**< The "pmevcntr0_el0" register. */
+    DR_REG_PMEVCNTR1_EL0,   /**< The "pmevcntr1_el0" register. */
+    DR_REG_PMEVCNTR2_EL0,   /**< The "pmevcntr2_el0" register. */
+    DR_REG_PMEVCNTR3_EL0,   /**< The "pmevcntr3_el0" register. */
+    DR_REG_PMEVCNTR4_EL0,   /**< The "pmevcntr4_el0" register. */
+    DR_REG_PMEVCNTR5_EL0,   /**< The "pmevcntr5_el0" register. */
+    DR_REG_PMEVCNTR6_EL0,   /**< The "pmevcntr6_el0" register. */
+    DR_REG_PMEVCNTR7_EL0,   /**< The "pmevcntr7_el0" register. */
+    DR_REG_PMEVCNTR8_EL0,   /**< The "pmevcntr8_el0" register. */
+    DR_REG_PMEVCNTR9_EL0,   /**< The "pmevcntr9_el0" register. */
+    DR_REG_PMEVCNTR10_EL0,  /**< The "pmevcntr10_el0" register. */
+    DR_REG_PMEVCNTR11_EL0,  /**< The "pmevcntr11_el0" register. */
+    DR_REG_PMEVCNTR12_EL0,  /**< The "pmevcntr12_el0" register. */
+    DR_REG_PMEVCNTR13_EL0,  /**< The "pmevcntr13_el0" register. */
+    DR_REG_PMEVCNTR14_EL0,  /**< The "pmevcntr14_el0" register. */
+    DR_REG_PMEVCNTR15_EL0,  /**< The "pmevcntr15_el0" register. */
+    DR_REG_PMEVCNTR16_EL0,  /**< The "pmevcntr16_el0" register. */
+    DR_REG_PMEVCNTR17_EL0,  /**< The "pmevcntr17_el0" register. */
+    DR_REG_PMEVCNTR18_EL0,  /**< The "pmevcntr18_el0" register. */
+    DR_REG_PMEVCNTR19_EL0,  /**< The "pmevcntr19_el0" register. */
+    DR_REG_PMEVCNTR20_EL0,  /**< The "pmevcntr20_el0" register. */
+    DR_REG_PMEVCNTR21_EL0,  /**< The "pmevcntr21_el0" register. */
+    DR_REG_PMEVCNTR22_EL0,  /**< The "pmevcntr22_el0" register. */
+    DR_REG_PMEVCNTR23_EL0,  /**< The "pmevcntr23_el0" register. */
+    DR_REG_PMEVCNTR24_EL0,  /**< The "pmevcntr24_el0" register. */
+    DR_REG_PMEVCNTR25_EL0,  /**< The "pmevcntr25_el0" register. */
+    DR_REG_PMEVCNTR26_EL0,  /**< The "pmevcntr26_el0" register. */
+    DR_REG_PMEVCNTR27_EL0,  /**< The "pmevcntr27_el0" register. */
+    DR_REG_PMEVCNTR28_EL0,  /**< The "pmevcntr28_el0" register. */
+    DR_REG_PMEVCNTR29_EL0,  /**< The "pmevcntr29_el0" register. */
+    DR_REG_PMEVCNTR30_EL0,  /**< The "pmevcntr30_el0" register. */
+    DR_REG_PMEVTYPER0_EL0,  /**< The "pmevtyper0_el0" register. */
+    DR_REG_PMEVTYPER1_EL0,  /**< The "pmevtyper1_el0" register. */
+    DR_REG_PMEVTYPER2_EL0,  /**< The "pmevtyper2_el0" register. */
+    DR_REG_PMEVTYPER3_EL0,  /**< The "pmevtyper3_el0" register. */
+    DR_REG_PMEVTYPER4_EL0,  /**< The "pmevtyper4_el0" register. */
+    DR_REG_PMEVTYPER5_EL0,  /**< The "pmevtyper5_el0" register. */
+    DR_REG_PMEVTYPER6_EL0,  /**< The "pmevtyper6_el0" register. */
+    DR_REG_PMEVTYPER7_EL0,  /**< The "pmevtyper7_el0" register. */
+    DR_REG_PMEVTYPER8_EL0,  /**< The "pmevtyper8_el0" register. */
+    DR_REG_PMEVTYPER9_EL0,  /**< The "pmevtyper9_el0" register. */
+    DR_REG_PMEVTYPER10_EL0, /**< The "pmevtyper10_el0" register. */
+    DR_REG_PMEVTYPER11_EL0, /**< The "pmevtyper11_el0" register. */
+    DR_REG_PMEVTYPER12_EL0, /**< The "pmevtyper12_el0" register. */
+    DR_REG_PMEVTYPER13_EL0, /**< The "pmevtyper13_el0" register. */
+    DR_REG_PMEVTYPER14_EL0, /**< The "pmevtyper14_el0" register. */
+    DR_REG_PMEVTYPER15_EL0, /**< The "pmevtyper15_el0" register. */
+    DR_REG_PMEVTYPER16_EL0, /**< The "pmevtyper16_el0" register. */
+    DR_REG_PMEVTYPER17_EL0, /**< The "pmevtyper17_el0" register. */
+    DR_REG_PMEVTYPER18_EL0, /**< The "pmevtyper18_el0" register. */
+    DR_REG_PMEVTYPER19_EL0, /**< The "pmevtyper19_el0" register. */
+    DR_REG_PMEVTYPER20_EL0, /**< The "pmevtyper20_el0" register. */
+    DR_REG_PMEVTYPER21_EL0, /**< The "pmevtyper21_el0" register. */
+    DR_REG_PMEVTYPER22_EL0, /**< The "pmevtyper22_el0" register. */
+    DR_REG_PMEVTYPER23_EL0, /**< The "pmevtyper23_el0" register. */
+    DR_REG_PMEVTYPER24_EL0, /**< The "pmevtyper24_el0" register. */
+    DR_REG_PMEVTYPER25_EL0, /**< The "pmevtyper25_el0" register. */
+    DR_REG_PMEVTYPER26_EL0, /**< The "pmevtyper26_el0" register. */
+    DR_REG_PMEVTYPER27_EL0, /**< The "pmevtyper27_el0" register. */
+    DR_REG_PMEVTYPER28_EL0, /**< The "pmevtyper28_el0" register. */
+    DR_REG_PMEVTYPER29_EL0, /**< The "pmevtyper29_el0" register. */
+    DR_REG_PMEVTYPER30_EL0, /**< The "pmevtyper30_el0" register. */
+    DR_REG_PMCCFILTR_EL0,   /**< The "pmccfiltr_el0" register. */
+    DR_REG_SPSR_IRQ,        /**< The "spsr_irq" register. */
+    DR_REG_SPSR_ABT,        /**< The "spsr_abt" register. */
+    DR_REG_SPSR_UND,        /**< The "spsr_und" register. */
+    DR_REG_SPSR_FIQ,        /**< The "spsr_fiq" register. */
+
+    /* AArch32 Thread Registers */
+    DR_REG_TPIDRURW, /**< User Read/Write Thread ID Register */
+    DR_REG_TPIDRURO, /**< User Read-Only Thread ID Register */
+
+    /* SVE vector registers */
+    DR_REG_Z0,  /**< The "z0" register. */
+    DR_REG_Z1,  /**< The "z1" register. */
+    DR_REG_Z2,  /**< The "z2" register. */
+    DR_REG_Z3,  /**< The "z3" register. */
+    DR_REG_Z4,  /**< The "z4" register. */
+    DR_REG_Z5,  /**< The "z5" register. */
+    DR_REG_Z6,  /**< The "z6" register. */
+    DR_REG_Z7,  /**< The "z7" register. */
+    DR_REG_Z8,  /**< The "z8" register. */
+    DR_REG_Z9,  /**< The "z9" register. */
+    DR_REG_Z10, /**< The "z10" register. */
+    DR_REG_Z11, /**< The "z11" register. */
+    DR_REG_Z12, /**< The "z12" register. */
+    DR_REG_Z13, /**< The "z13" register. */
+    DR_REG_Z14, /**< The "z14" register. */
+    DR_REG_Z15, /**< The "z15" register. */
+    DR_REG_Z16, /**< The "z16" register. */
+    DR_REG_Z17, /**< The "z17" register. */
+    DR_REG_Z18, /**< The "z18" register. */
+    DR_REG_Z19, /**< The "z19" register. */
+    DR_REG_Z20, /**< The "z20" register. */
+    DR_REG_Z21, /**< The "z21" register. */
+    DR_REG_Z22, /**< The "z22" register. */
+    DR_REG_Z23, /**< The "z23" register. */
+    DR_REG_Z24, /**< The "z24" register. */
+    DR_REG_Z25, /**< The "z25" register. */
+    DR_REG_Z26, /**< The "z26" register. */
+    DR_REG_Z27, /**< The "z27" register. */
+    DR_REG_Z28, /**< The "z28" register. */
+    DR_REG_Z29, /**< The "z29" register. */
+    DR_REG_Z30, /**< The "z30" register. */
+    DR_REG_Z31, /**< The "z31" register. */
+
+    /* SVE predicate registers */
+    DR_REG_P0,  /**< The "p0" register. */
+    DR_REG_P1,  /**< The "p1" register. */
+    DR_REG_P2,  /**< The "p2" register. */
+    DR_REG_P3,  /**< The "p3" register. */
+    DR_REG_P4,  /**< The "p4" register. */
+    DR_REG_P5,  /**< The "p5" register. */
+    DR_REG_P6,  /**< The "p6" register. */
+    DR_REG_P7,  /**< The "p7" register. */
+    DR_REG_P8,  /**< The "p8" register. */
+    DR_REG_P9,  /**< The "p9" register. */
+    DR_REG_P10, /**< The "p10" register. */
+    DR_REG_P11, /**< The "p11" register. */
+    DR_REG_P12, /**< The "p12" register. */
+    DR_REG_P13, /**< The "p13" register. */
+    DR_REG_P14, /**< The "p14" register. */
+    DR_REG_P15, /**< The "p15" register. */
+
+    /* AArch64 Counter/Timer Register(s) */
+    DR_REG_CNTVCT_EL0, /**< Virtual Timer Count Register, EL0. */
+
+    /* Aliases below here: */
+    DR_REG_R0 = DR_REG_X0,   /**< Alias for the x0 register. */
+    DR_REG_R1 = DR_REG_X1,   /**< Alias for the x1 register. */
+    DR_REG_R2 = DR_REG_X2,   /**< Alias for the x2 register. */
+    DR_REG_R3 = DR_REG_X3,   /**< Alias for the x3 register. */
+    DR_REG_R4 = DR_REG_X4,   /**< Alias for the x4 register. */
+    DR_REG_R5 = DR_REG_X5,   /**< Alias for the x5 register. */
+    DR_REG_R6 = DR_REG_X6,   /**< Alias for the x6 register. */
+    DR_REG_R7 = DR_REG_X7,   /**< Alias for the x7 register. */
+    DR_REG_R8 = DR_REG_X8,   /**< Alias for the x8 register. */
+    DR_REG_R9 = DR_REG_X9,   /**< Alias for the x9 register. */
+    DR_REG_R10 = DR_REG_X10, /**< Alias for the x10 register. */
+    DR_REG_R11 = DR_REG_X11, /**< Alias for the x11 register. */
+    DR_REG_R12 = DR_REG_X12, /**< Alias for the x12 register. */
+    DR_REG_R13 = DR_REG_X13, /**< Alias for the x13 register. */
+    DR_REG_R14 = DR_REG_X14, /**< Alias for the x14 register. */
+    DR_REG_R15 = DR_REG_X15, /**< Alias for the x15 register. */
+    DR_REG_R16 = DR_REG_X16, /**< Alias for the x16 register. */
+    DR_REG_R17 = DR_REG_X17, /**< Alias for the x17 register. */
+    DR_REG_R18 = DR_REG_X18, /**< Alias for the x18 register. */
+    DR_REG_R19 = DR_REG_X19, /**< Alias for the x19 register. */
+    DR_REG_R20 = DR_REG_X20, /**< Alias for the x20 register. */
+    DR_REG_R21 = DR_REG_X21, /**< Alias for the x21 register. */
+    DR_REG_R22 = DR_REG_X22, /**< Alias for the x22 register. */
+    DR_REG_R23 = DR_REG_X23, /**< Alias for the x23 register. */
+    DR_REG_R24 = DR_REG_X24, /**< Alias for the x24 register. */
+    DR_REG_R25 = DR_REG_X25, /**< Alias for the x25 register. */
+    DR_REG_R26 = DR_REG_X26, /**< Alias for the x26 register. */
+    DR_REG_R27 = DR_REG_X27, /**< Alias for the x27 register. */
+    DR_REG_R28 = DR_REG_X28, /**< Alias for the x28 register. */
+    DR_REG_R29 = DR_REG_X29, /**< Alias for the x29 register. */
+    DR_REG_R30 = DR_REG_X30, /**< Alias for the x30 register. */
+    DR_REG_R31 = DR_REG_X31, /**< Alias for the x31 register. */
+    DR_REG_SP = DR_REG_XSP,  /**< The stack pointer register. */
+    DR_REG_LR = DR_REG_X30,  /**< The link register. */
+
+    DR_REG_SL = DR_REG_R10,  /**< Alias for the r10 register. */
+    DR_REG_FP = DR_REG_R11,  /**< Alias for the r11 register. */
+    DR_REG_IP = DR_REG_R12,  /**< Alias for the r12 register. */
+
+    /* AArch64 Thread Registers */
+    /** Thread Pointer/ID Register, EL0. */
+    DR_REG_TPIDR_EL0 = DR_REG_TPIDRURW,
+    /** Thread Pointer/ID Register, Read-Only, EL0. */
+    DR_REG_TPIDRRO_EL0 = DR_REG_TPIDRURO,
+    /* ARMv7 Thread Registers */
+    DR_REG_CP15_C13_2 = DR_REG_TPIDRURW,        /**< User Read/Write Thread ID Register */
+    DR_REG_CP15_C13_3 = DR_REG_TPIDRURO,        /**< User Read-Only Thread ID Register */
+
+    DR_REG_LAST_VALID_ENUM = DR_REG_CNTVCT_EL0, /**< Last valid register enum */
+    DR_REG_LAST_ENUM = DR_REG_CNTVCT_EL0,       /**< Last value of register enums */
+
+    DR_REG_START_64 = DR_REG_X0,  /**< Start of 64-bit general register enum values */
+    DR_REG_STOP_64 = DR_REG_XSP,  /**< End of 64-bit general register enum values */
+    DR_REG_START_32 = DR_REG_W0,  /**< Start of 32-bit general register enum values */
+    DR_REG_STOP_32 = DR_REG_WSP,  /**< End of 32-bit general register enum values */
+
+    DR_NUM_SIMD_VECTOR_REGS = DR_REG_Z31 - DR_REG_Z0 + 1,     /**< Count of SIMD regs. */
 
     DR_REG_START_GPR = DR_REG_X0, /**< Start of full-size general-purpose registers */
     DR_REG_STOP_GPR = DR_REG_X31, /**< End of full-size general-purpose registers */
@@ -1690,6 +2130,16 @@ struct _opnd_t {
                                                  * index_reg, leaving index_reg binary
                                                  * compatible at 8 bits.
                                                  */
+#    elif defined(RISCV64)
+            /*
+             * TODO: riscv64
+             * TODO: this is a copy of AARCH64
+             */
+            byte /*bool*/ pre_index : 1;
+            /* Access this using opnd_get_index_extend and opnd_set_index_extend. */
+            byte /*dr_extend_type_t*/ extend_type : 3;
+            /* Shift register offset left by amount implied by size of memory operand: */
+            byte /*bool*/ scaled : 1;
 #    endif
         } base_disp; /* BASE_DISP_kind */
         void *addr;  /* REL_ADDR_kind and ABS_ADDR_kind */
@@ -2025,6 +2475,7 @@ opnd_create_base_disp_aarch64(reg_id_t base_reg, reg_id_t index_reg,
                               dr_extend_type_t extend_type, bool scaled, int disp,
                               dr_opnd_flags_t flags, opnd_size_t size);
 #endif
+/* TODO: riscv64? */
 
 DR_API
 /**
@@ -2588,6 +3039,7 @@ DR_API
 bool
 opnd_set_index_extend(opnd_t *opnd, dr_extend_type_t extend, bool scaled);
 #endif /* AARCH64 */
+/* TODO: riscv64? */
 
 DR_API
 /**

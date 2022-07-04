@@ -133,6 +133,12 @@
         (FRAG_IS_32(flags) ? STUB_INDIRECT_SIZE32 : STUB_INDIRECT_SIZE64)
 #elif defined(AARCH64)
 #    define STUB_INDIRECT_SIZE(flags) (7 * AARCH64_INSTR_SIZE)
+#elif defined(RISCV64)
+/*
+ * TODO: riscv64
+ * TODO: this is a copy of AARCH64
+ */
+#    define STUB_INDIRECT_SIZE(flags) (7 * AARCH64_INSTR_SIZE)
 #else
 /* indirect stub is parallel to the direct one minus the data slot */
 #    define STUB_INDIRECT_SIZE(flags) \
@@ -776,7 +782,11 @@ coarse_indirect_stub_jmp_target(cache_pc stub)
     /* FIXME i#1551, i#1569: NYI on ARM/AArch64 */
     ASSERT_NOT_IMPLEMENTED(false);
     return NULL;
-#endif /* X86/ARM */
+#elif defined(RISCV64)
+    /* TODO: riscv64 */
+    ASSERT_NOT_IMPLEMENTED(false);
+    return NULL;
+#endif /* X86/ARM/RISCV64 */
 }
 
 uint
@@ -1308,6 +1318,7 @@ fragment_prefix_size(uint flags)
             return 0;
     }
 #endif
+/* TODO: riscv64? */
 }
 
 #ifdef PROFILE_RDTSC
@@ -1905,6 +1916,17 @@ append_jmp_to_fcache_target(dcontext_t *dcontext, instrlist_t *ilist,
                                               FCACHE_ENTER_TARGET_SLOT));
             /* br x0 */
             APP(ilist, INSTR_CREATE_br(dcontext, opnd_create_reg(DR_REG_X0)));
+#elif defined(RISCV64)
+            /* TODO: riscv64? */
+            /* TODO: this is a copy of AARCH64*/
+            /* Load next_tag from FCACHE_ENTER_TARGET_SLOT, stored by
+             * append_setup_fcache_target.
+             */
+            APP(ilist,
+                instr_create_restore_from_tls(dcontext, DR_REG_X0,
+                                              FCACHE_ENTER_TARGET_SLOT));
+            /* br x0 */
+            APP(ilist, INSTR_CREATE_br(dcontext, opnd_create_reg(DR_REG_X0)));
 #else
             APP(ilist,
                 XINST_CREATE_jump_mem(dcontext,
@@ -2165,6 +2187,7 @@ emit_fcache_enter_common(dcontext_t *dcontext, generated_code_t *code, byte *pc,
             dcontext, opnd_create_base_disp(dr_reg_stolen, DR_REG_NULL, 0, 0, OPSZ_16),
             opnd_create_reg(DR_REG_X0), opnd_create_reg(DR_REG_X1)));
 #endif
+/* TODO: riscv64? */
 
     /* restore the original register state */
     append_restore_simd_reg(dcontext, &ilist, absolute);
@@ -2602,6 +2625,7 @@ append_fcache_return_common(dcontext_t *dcontext, generated_code_t *code,
 #else
     APP(ilist, RESTORE_FROM_DC(dcontext, REG_XSP, DSTACK_OFFSET));
 #endif
+/* TODO: riscv64? */
 
     append_save_clear_xflags(dcontext, ilist, absolute);
     /* Please note that append_save_simd_reg may change the flags. Therefore, the
@@ -3081,6 +3105,7 @@ instr_is_ibl_hit_jump(instr_t *instr)
     return instr_is_jump_mem(instr);
 }
 #endif
+/* TODO: riscv64? */
 
 /* what we do on a hit in the hashtable */
 /* Restore XBX saved from the indirect exit stub insert_jmp_to_ibl() */
@@ -3192,6 +3217,8 @@ append_ibl_found(dcontext_t *dcontext, instrlist_t *ilist, ibl_code_t *ibl_code,
          */
 #ifdef AARCH64
         ASSERT_NOT_IMPLEMENTED(false); /* FIXME i#1569 */
+#elif defined(RISCV64)
+        ASSERT_NOT_IMPLEMENTED(false); /* TODO: riscv64 */
 #else
         APP(ilist,
             XINST_CREATE_jump_mem(dcontext,
@@ -3225,6 +3252,8 @@ append_ibl_found(dcontext_t *dcontext, instrlist_t *ilist, ibl_code_t *ibl_code,
             ASSERT_NOT_IMPLEMENTED(false); /* FIXME i#1569: NYI on AArch64 */
 #elif defined(ARM)
             ASSERT_NOT_IMPLEMENTED(false); /* FIXME i#1551: NYI on ARM */
+#elif defined(RISCV64)
+            ASSERT_NOT_IMPLEMENTED(false); /* TODO: riscv64 */
 #endif
         } else {
             APP(ilist, SAVE_TO_TLS(dcontext, SCRATCH_REG2, INDIRECT_STUB_SPILL_SLOT));
@@ -3237,6 +3266,8 @@ append_ibl_found(dcontext_t *dcontext, instrlist_t *ilist, ibl_code_t *ibl_code,
                     RESTORE_FROM_TLS(dcontext, SCRATCH_REG2, MANGLE_XCX_SPILL_SLOT));
 #ifdef AARCH64
             ASSERT_NOT_IMPLEMENTED(false); /* FIXME i#1569 */
+#elif defined(RISCV64)
+        ASSERT_NOT_IMPLEMENTED(false); /* TODO: riscv64 */
 #else
             APP(ilist,
                 XINST_CREATE_jump_mem(dcontext,
@@ -3577,7 +3608,15 @@ create_syscall_instr(dcontext_t *dcontext)
         }
     }
 #    endif
-#endif /* ARM/X86 */
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCHXX
+     */
+    if (method == SYSCALL_METHOD_SVC || method == SYSCALL_METHOD_UNINITIALIZED) {
+        return INSTR_CREATE_svc(dcontext, opnd_create_immed_int((sbyte)0x0, OPSZ_1));
+    }
+#endif /* ARM/X86/RISCV64 */
     else {
         ASSERT_NOT_REACHED();
         return NULL;
@@ -4803,6 +4842,7 @@ emit_do_syscall_common(dcontext_t *dcontext, generated_code_t *code, byte *pc,
     /* XXX: should have a proper patch list entry */
     *syscall_offs += AARCH64_INSTR_SIZE;
 #endif
+/* TODO: riscv64? */
 
 #if defined(ARM)
     /* We have to save r0 in case the syscall is interrupted.  We can't
@@ -4822,6 +4862,7 @@ emit_do_syscall_common(dcontext_t *dcontext, generated_code_t *code, byte *pc,
                          opnd_create_reg(DR_REG_X0), opnd_create_reg(DR_REG_X1)));
     *syscall_offs += AARCH64_INSTR_SIZE;
 #endif
+/* TODO: riscv64? */
 
     /* system call itself -- using same method we've observed OS using */
     APP(&ilist, syscall);
@@ -4861,6 +4902,7 @@ emit_do_syscall_common(dcontext_t *dcontext, generated_code_t *code, byte *pc,
     /* Save X1 as this is used for the indirect branch in the exit stub. */
     APP(&ilist, instr_create_save_to_tls(dcontext, SCRATCH_REG1, TLS_REG1_SLOT));
 #endif
+/* TODO: riscv64? */
 
     insert_mov_immed_ptrsz(dcontext, (ptr_int_t)get_syscall_linkstub(),
                            opnd_create_reg(SCRATCH_REG0), &ilist, NULL, NULL, NULL);
@@ -4973,6 +5015,7 @@ emit_fcache_enter_gonative(dcontext_t *dcontext, generated_code_t *code, byte *p
     return pc + len;
 }
 #endif /* AARCHXX */
+/* TODO: riscv64? */
 
 #ifdef WINDOWS
 /* like fcache_enter but indirects the dcontext passed in through edi */
@@ -5182,6 +5225,7 @@ decode_syscall_num(dcontext_t *dcontext, byte *entry)
                 break;
             } else
 #endif
+/* TODO: riscv64? */
                 break; /* give up gracefully */
         }
     }
@@ -5257,6 +5301,7 @@ emit_new_thread_dynamo_start(dcontext_t *dcontext, byte *pc)
         XINST_CREATE_move(dcontext, opnd_create_reg(SCRATCH_REG0),
                           opnd_create_reg(REG_XSP)));
 #    else
+    /* TODO: riscv64? */
     /* For AArch64, SP was already saved by insert_push_all_registers and
      * pointing to priv_mcontext_t. Move sp to the first argument:
      * mov x0, sp
@@ -5462,6 +5507,7 @@ get_ibl_entry_tls_offs(dcontext_t *dcontext, cache_pc ibl_entry)
     return (local - (byte *)&state);
 }
 #endif
+/* TODO: riscv64? */
 
 /* emit the special_ibl trampoline code for transferring the control flow to
  * ibl lookup
@@ -5580,7 +5626,25 @@ emit_special_ibl_xfer(dcontext_t *dcontext, byte *pc, generated_code_t *code, ui
             dcontext, opnd_create_reg(DR_REG_PC),
             OPND_TLS_FIELD(get_ibl_entry_tls_offs(dcontext, ibl_unlinked_tgt))));
 #        endif /* AARCH64/ARM */
-#    endif     /* X86/AARCHXX */
+#    elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCHXX
+     */
+    /* Reuse SCRATCH_REG5 which contains dcontext currently. */
+    APP(&ilist,
+        INSTR_CREATE_ldrsb(dcontext, opnd_create_reg(SCRATCH_REG5),
+                           OPND_DC_FIELD(false, dcontext, OPSZ_1, SIGPENDING_OFFSET)));
+    APP(&ilist,
+        INSTR_CREATE_cbz(dcontext, opnd_create_instr(skip_unlinked_tgt_jump),
+                         opnd_create_reg(SCRATCH_REG5)));
+    insert_shared_restore_dcontext_reg(dcontext, &ilist, NULL);
+    APP(&ilist,
+        INSTR_CREATE_ldr(
+            dcontext, opnd_create_reg(SCRATCH_REG1),
+            OPND_TLS_FIELD(get_ibl_entry_tls_offs(dcontext, ibl_unlinked_tgt))));
+    APP(&ilist, XINST_CREATE_jump_reg(dcontext, opnd_create_reg(SCRATCH_REG1)));
+#    endif     /* X86/AARCHXX/RISCV64 */
     APP(&ilist, skip_unlinked_tgt_jump);
 #    ifdef X86
     APP(&ilist,
@@ -5638,12 +5702,23 @@ emit_special_ibl_xfer(dcontext_t *dcontext, byte *pc, generated_code_t *code, ui
         INSTR_CREATE_ldr(
             dcontext, opnd_create_reg(DR_REG_PC),
             OPND_TLS_FIELD(get_ibl_entry_tls_offs(dcontext, ibl_linked_tgt))));
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCH64
+     */
+    APP(&ilist,
+        INSTR_CREATE_ldr(
+            dcontext, opnd_create_reg(SCRATCH_REG1),
+            OPND_TLS_FIELD(get_ibl_entry_tls_offs(dcontext, ibl_linked_tgt))));
+    APP(&ilist, XINST_CREATE_jump_reg(dcontext, opnd_create_reg(SCRATCH_REG1)));
 #endif
 
     instr_t *offs_instr = instrlist_last(&ilist);
 #if defined(AARCH64)
     offs_instr = instr_get_prev(offs_instr);
 #endif
+/* TODO: riscv64? */
     add_patch_marker(&patch, offs_instr, PATCH_UINT_SIZED /* pc relative */,
                      0 /* point at opcode */,
                      (ptr_uint_t *)&code->special_ibl_unlink_offs[index]);
@@ -5736,6 +5811,14 @@ emit_clean_call_save(dcontext_t *dcontext, byte *pc, generated_code_t *code)
     /* save all registers */
     insert_push_all_registers(dcontext, NULL, &ilist, NULL, (uint)PAGE_SIZE,
                               OPND_CREATE_INT32(0), REG_NULL, true);
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copyp of AARCH64
+     */
+    /* save all registers */
+    insert_push_all_registers(dcontext, NULL, &ilist, NULL, (uint)PAGE_SIZE,
+                              OPND_CREATE_INT32(0), REG_NULL, true);
 #endif
 
 #ifdef WINDOWS
@@ -5773,6 +5856,12 @@ emit_clean_call_save(dcontext_t *dcontext, byte *pc, generated_code_t *code)
         INSTR_CREATE_ret_imm(dcontext,
                              OPND_CREATE_INT16(get_clean_call_temp_stack_size())));
 #elif defined(AARCH64)
+    APP(&ilist, INSTR_CREATE_br(dcontext, opnd_create_reg(DR_REG_X30)));
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copyp of AARCH64
+     */
     APP(&ilist, INSTR_CREATE_br(dcontext, opnd_create_reg(DR_REG_X30)));
 #else
     /* FIXME i#1621: NYI on AArch32 */
@@ -5838,6 +5927,9 @@ emit_clean_call_restore(dcontext_t *dcontext, byte *pc, generated_code_t *code)
 
     APP(&ilist, INSTR_CREATE_br(dcontext, opnd_create_reg(DR_REG_X30)));
 #else
+    /*
+     * TODO: riscv64
+     */
     /* FIXME i#1621: NYI on AArch32 */
     ASSERT_NOT_IMPLEMENTED(false);
 #endif

@@ -153,6 +153,12 @@ find_dl_fixup(dcontext_t *dcontext, app_pc resolver)
     /* FIXME i#1551, i#1569: NYI on ARM/AArch64 */
     ASSERT_NOT_IMPLEMENTED(false);
     return NULL;
+#elif defined(RISCV64)
+    /* TODO: riscv64
+     * TODO: this is just a copy of AARCHXX
+     */
+    ASSERT_NOT_IMPLEMENTED(false);
+    return NULL;
 #endif /* X86/ARM */
 }
 

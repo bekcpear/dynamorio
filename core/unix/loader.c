@@ -98,6 +98,7 @@ static const char *const system_lib_paths[] = {
 #    endif
 #else
 /* 64-bit Ubuntu */
+/* TODO: for other os? */
 #    ifdef X86
     "/lib64/tls/i686/cmov",
 #    endif
@@ -109,6 +110,9 @@ static const char *const system_lib_paths[] = {
 #    elif defined(AARCH64)
     "/lib/aarch64-linux-gnu",
     "/usr/lib/aarch64-linux-gnu",
+#    elif defined(RISCV64)
+    "/lib/riscv64-linux-gnu",
+    "/usr/lib/riscv64-linux-gnu",
 #    endif
 #endif
 };

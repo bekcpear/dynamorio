@@ -191,6 +191,25 @@
                             * offset for the symbol.      \
                             */
 #    endif                 /* ANDROID */
+#elif defined(RISCV64)
+     /* TODO: riscv64
+      * TODO: this is a copy of AARCH64
+      */
+#    define ELF_R_TYPE ELF64_R_TYPE
+#    define ELF_R_SYM ELF64_R_SYM
+/* relocation type */
+#    define ELF_R_NONE R_RISCV64_NONE           /* No relocation. */
+#    define ELF_R_DIRECT R_RISCV64_ABS64        /* Direct 64 bit. */
+#    define ELF_R_COPY R_RISCV64_COPY           /* Copy symbol at runtime. */
+#    define ELF_R_GLOB_DAT R_RISCV64_GLOB_DAT   /* Create GOT entry. */
+#    define ELF_R_JUMP_SLOT R_RISCV64_JUMP_SLOT /* Create PLT entry. */
+#    define ELF_R_RELATIVE R_RISCV64_RELATIVE   /* Adjust by program base. */
+#    define ELF_R_IRELATIVE R_RISCV64_IRELATIVE /* STT_GNU_IFUNC relocation. */
+/* tls related */
+#    define ELF_R_TLS_DTPMOD 1028 /* R_AARCH64_TLS_DTPMOD64 Module number. */
+#    define ELF_R_TLS_TPOFF 1030  /* R_AARCH64_TLS_TPREL64  TP-relative offset. */
+#    define ELF_R_TLS_DTPOFF 1029 /* R_AARCH64_TLS_DTPREL64 Module-relative offset. */
+#    define ELF_R_TLS_DESC 1031   /* R_AARCH64_TLSDESC      TLS Descriptor. */
 #endif                     /* X86/ARM */
 
 /* Define ARM ELF machine types to support compiling on old Linux distros. */
@@ -199,6 +218,10 @@
 #endif
 #ifndef EM_AARCH64
 #    define EM_AARCH64 183
+#endif
+#ifndef EM_RISCV
+     /* TODO: riscv64 */
+#    define EM_RISCV 243
 #endif
 
 bool

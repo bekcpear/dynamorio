@@ -1256,3 +1256,11 @@ RSTATS_DEF("Rseq native calls inserted", num_rseq_native_calls_inserted)
 RSTATS_DEF("Load-exclusive instrs converted to CAS", num_ldex2cas)
 RSTATS_DEF("Store-exclusive instrs converted to CAS", num_stex2cas)
 #endif
+#ifdef RISCV64
+/*
+ * TODO: riscv64
+ * TODO: this is a copy of AARCHXX
+ */
+RSTATS_DEF("Load-exclusive instrs converted to CAS", num_ldex2cas)
+RSTATS_DEF("Store-exclusive instrs converted to CAS", num_stex2cas)
+#endif

@@ -79,6 +79,13 @@ static uint verbose = 0;
 #elif defined(AARCH64)
 #    define CALL_POINT_SCRATCH_REG DR_REG_X12
 #    define RETURN_POINT_SCRATCH_REG DR_REG_X1
+#elif defined(RISCV64)
+/*
+ * TODO: riscv64
+ * TODO: this is a copy of AARCH64
+ */
+#    define CALL_POINT_SCRATCH_REG DR_REG_X12
+#    define RETURN_POINT_SCRATCH_REG DR_REG_X1
 #elif defined(X64)
 #    define CALL_POINT_SCRATCH_REG DR_REG_R11
 #    define RETURN_POINT_SCRATCH_REG DR_REG_RCX
@@ -126,6 +133,7 @@ replace_retaddr_sentinel(void);
 byte *
 get_cur_xsp(void);
 #endif
+/* TODO: riscv64? */
 
 /***************************************************************************
  * REQUEST TRACKING
@@ -605,6 +613,7 @@ drwrap_get_mcontext_internal(drwrap_context_t *wrapcxt, dr_mcontext_flags_t flag
 #    endif
                 ASSERT(!TEST(EFLAGS_DF, wrapcxt->mc->xflags), "DF not cleared");
 #endif
+/* TODO: riscv64? */
             }
         }
     }
@@ -670,6 +679,23 @@ drwrap_arg_addr(drwrap_context_t *wrapcxt, int arg)
         }
 #elif defined(AARCH64)
     case DRWRAP_CALLCONV_AARCH64:
+        switch (arg) {
+        case 0: return &wrapcxt->mc->r0;
+        case 1: return &wrapcxt->mc->r1;
+        case 2: return &wrapcxt->mc->r2;
+        case 3: return &wrapcxt->mc->r3;
+        case 4: return &wrapcxt->mc->r4;
+        case 5: return &wrapcxt->mc->r5;
+        case 6: return &wrapcxt->mc->r6;
+        case 7: return &wrapcxt->mc->r7;
+        default: return drwrap_stack_arg_addr(wrapcxt, arg, 8, 0);
+        }
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCH64
+     * */
+    case DRWRAP_CALLCONV_RISCV64:
         switch (arg) {
         case 0: return &wrapcxt->mc->r0;
         case 1: return &wrapcxt->mc->r1;
@@ -1465,6 +1491,7 @@ drwrap_replace_native_push_retaddr(void *drcontext, instrlist_t *bb, app_pc pc,
                       pc));
     }
 #endif /* !ARM */
+/* TODO: riscv64? */
 }
 
 static void
@@ -1532,6 +1559,7 @@ drwrap_replace_native_bb(void *drcontext, instrlist_t *bb, instr_t *inst, app_pc
                                             opnd_create_reg(CALL_POINT_SCRATCH_REG),
                                             opnd_create_reg(DR_REG_XSP)));
 #endif
+/* TODO: riscv64? */
     instrlist_meta_append(
         bb,
         XINST_CREATE_store(
@@ -1552,6 +1580,7 @@ drwrap_replace_native_bb(void *drcontext, instrlist_t *bb, instr_t *inst, app_pc
             drcontext, dr_reg_spill_slot_opnd(drcontext, SPILL_SLOT_REDIRECT_NATIVE_TGT),
             OPND_CREATE_INT32(rn->stack_adjust)));
 #endif
+/* TODO: riscv64? */
     if (rn->user_data != NULL) {
 #if defined(ARM) || defined(X64)
         /* We clobber CALL_POINT_SCRATCH_REG, which is scratch in most call convs */
@@ -1686,6 +1715,7 @@ replace_native_xfer_target(void)
         (uint)dr_read_saved_reg(drcontext, SPILL_SLOT_REDIRECT_NATIVE_TGT);
     byte *target = replace_native_ret_stub(stack_adjust);
 #endif
+/* TODO: riscv64? */
 
     /* Set up for gencode.  We want to re-do the stdcall arg and retaddr teardown,
      * but we don't want the app to see it.  We can't easily do it in
@@ -1721,12 +1751,14 @@ drwrap_replace_native_fini(void *drcontext)
 #elif defined(AARCHXX)
     byte *cur_xsp = get_cur_xsp();
 #endif
+/* TODO: riscv64? */
     ASSERT(xsp != NULL, "did client clobber TLS slot?");
 #ifdef AARCHXX
     app_retaddr = (app_pc)dr_read_saved_reg(drcontext, SPILL_SLOT_REDIRECT_NATIVE_TGT);
 #else
     app_retaddr = *(app_pc *)xsp;
 #endif
+/* TODO: riscv64? */
     /* Store data for replace_native_xfer_helper */
     dr_write_saved_reg(drcontext, DRWRAP_REPLACE_NATIVE_SP_SLOT, (reg_t)app_retaddr);
 
@@ -1747,6 +1779,7 @@ drwrap_replace_native_fini(void *drcontext)
 #else
     *(app_pc *)xsp = (app_pc)replace_native_xfer;
 #endif
+/* TODO: riscv64? */
 
     /* DrMem i#1217: zero out this local to avoid messing up high-performance
      * callstack stack scans.
@@ -1982,6 +2015,7 @@ drwrap_in_callee(void *arg1, reg_t xsp _IF_NOT_X86(reg_t lr))
     /* ditto */
     mc.lr = lr;
 #endif
+/* TODO: riscv64? */
     mc.flags = 0; /* if anything else is asked for, lazily initialize */
 
     ASSERT(arg1 != NULL, "drwrap_in_callee: arg1 is NULL!");
@@ -2534,6 +2568,7 @@ drwrap_event_restore_state_ex(void *drcontext, bool restore_memory,
         info->mcontext->lr = (reg_t)pt->retaddr[pt->wrap_level];
     }
 #endif
+/* TODO: riscv64? */
     if (!restore_memory)
         return true;
     for (int i = 0; i <= pt->wrap_level; ++i) {

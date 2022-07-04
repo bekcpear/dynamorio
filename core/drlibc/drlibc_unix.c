@@ -492,7 +492,12 @@ const reg_id_t syscall_regparms[MAX_SYSCALL_ARGS] = {
 #    endif /* 64/32-bit */
 #elif defined(AARCHXX)
     DR_REG_R0, DR_REG_R1, DR_REG_R2, DR_REG_R3, DR_REG_R4, DR_REG_R5,
-#endif /* X86/ARM */
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     */
+    DR_REG_R0, DR_REG_R1, DR_REG_R2, DR_REG_R3, DR_REG_R4, DR_REG_R5,
+#endif /* X86/ARM/RISCV64 */
 };
 
 /****************************************************************************

@@ -85,8 +85,8 @@
 # error ARM is only 32-bit; AARCH64 is 64-bit
 #endif
 
-#if defined(AARCHXX) && defined(WINDOWS)
-# error ARM/AArch64 on Windows is not supported
+#if (defined(AARCHXX) || defined(RISCV64)) && defined(WINDOWS)
+# error ARM/AArch64/RISCV64 on Windows is not supported
 #endif
 
 #undef WEAK /* avoid conflict with C define */
@@ -135,6 +135,23 @@
 #   define SYMREF(sym) [sym]
 #  endif
 # elif defined(AARCHXX)
+#  define BYTE /* nothing */
+#  define WORD /* nothing */
+#  define DWORD /* nothing */
+#  define QWORD /* nothing */
+#  define MMWORD /* nothing */
+#  define XMMWORD /* nothing */
+#  define YMMWORD /* nothing */
+#  define ZMMWORD /* nothing */
+/* XXX: this will NOT produce PIC code!  A multi-instr multi-local-data sequence
+ * must be used.  See cleanup_and_terminate() for examples.
+ */
+#  define SYMREF(sym) =sym
+# elif defined(RISCV64)
+/*
+ * TODO: riscv64
+ * TODO: this is a copy of AARCHXX
+ */
 #  define BYTE /* nothing */
 #  define WORD /* nothing */
 #  define DWORD /* nothing */
@@ -322,6 +339,42 @@ ASSUME fs:_DATA @N@\
 # define REG_R11 x11
 # define REG_R12 x12
 /* skip [x13..x30], not available on AArch32 */
+#elif defined(RISCV64)
+/*
+ * TODO: riscv64
+ */
+# define REG_R0  x0
+# define REG_R1  x1
+# define REG_R2  x2
+# define REG_R3  x3
+# define REG_R4  x4
+# define REG_R5  x5
+# define REG_R6  x6
+# define REG_R7  x7
+# define REG_R8  x8
+# define REG_R9  x9
+# define REG_R10 x10
+# define REG_R11 x11
+# define REG_R12 x12
+# define REG_R13 x13
+# define REG_R14 x14
+# define REG_R15 x15
+# define REG_R16 x16
+# define REG_R17 x17
+# define REG_R18 x18
+# define REG_R19 x19
+# define REG_R20 x20
+# define REG_R21 x21
+# define REG_R22 x22
+# define REG_R23 x23
+# define REG_R24 x24
+# define REG_R25 x25
+# define REG_R26 x26
+# define REG_R27 x27
+# define REG_R28 x28
+# define REG_R29 x29
+# define REG_R30 x30
+# define REG_R31 x31
 #else /* Intel X86 */
 # ifdef X64
 #  define REG_XAX rax
@@ -442,6 +495,40 @@ ASSUME fs:_DATA @N@\
 #  define SAVE_PRESERVED_REGS    stp REG_PRESERVED_1, LR, [sp, #-16]!
 #  define RESTORE_PRESERVED_REGS ldp REG_PRESERVED_1, LR, [sp], #16
 # endif
+
+#elif defined(RISCV64)
+/*
+ * TODO: riscv64
+ * TODO: this is a copy of AARCHXX
+ */
+# define ARG1 REG_R0
+# define ARG2 REG_R1
+# define ARG3 REG_R2
+# define ARG4 REG_R3
+# define ARG5 REG_R4
+# define ARG6 REG_R5
+# define ARG7 REG_R6
+# define ARG8 REG_R7
+/* Arguments are passed on stack right-to-left. */
+# define ARG9  QWORD [REG_SP, #(0*ARG_SZ)] /* no ret addr */
+# define ARG10 QWORD [REG_SP, #(1*ARG_SZ)]
+# define ARG1_NORETADDR  ARG1
+# define ARG2_NORETADDR  ARG2
+# define ARG3_NORETADDR  ARG3
+# define ARG4_NORETADDR  ARG4
+# define ARG5_NORETADDR  ARG5
+# define ARG6_NORETADDR  ARG6
+# define ARG7_NORETADDR  ARG7
+# define ARG8_NORETADDR  ARG8
+# define ARG9_NORETADDR  ARG9
+# define ARG10_NORETADDR ARG10
+
+# define FP x29
+# define LR x30
+# define INDJMP br
+# define REG_PRESERVED_1 x19
+# define SAVE_PRESERVED_REGS    stp REG_PRESERVED_1, LR, [sp, #-16]!
+# define RESTORE_PRESERVED_REGS ldp REG_PRESERVED_1, LR, [sp], #16
 
 #else /* Intel X86 */
 # ifdef X64
@@ -774,6 +861,30 @@ ASSUME fs:_DATA @N@\
         mov      ARG2, p2   @N@\
         mov      ARG1, p1   @N@\
         blx      callee
+#elif defined(RISCV64)
+/* TODO: riscv64
+ * TODO: this is a copy of AARCH64
+ */
+# define CALLC0(callee)    \
+        bl       callee
+# define CALLC1(callee, p1)    \
+        mv      ARG1, p1   @N@\
+        bl       callee
+# define CALLC2(callee, p1, p2)    \
+        mv      ARG2, p2   @N@\
+        mv      ARG1, p1   @N@\
+        bl       callee
+# define CALLC3(callee, p1, p2, p3)    \
+        mv      ARG3, p3   @N@\
+        mv      ARG2, p2   @N@\
+        mv      ARG1, p1   @N@\
+        bl       callee
+# define CALLC4(callee, p1, p2, p3, p4)    \
+        mv      ARG4, p4   @N@\
+        mv      ARG3, p3   @N@\
+        mv      ARG2, p2   @N@\
+        mv      ARG1, p1   @N@\
+        bl       callee
 #endif
 
 /* For stdcall callees */
@@ -826,7 +937,22 @@ ASSUME fs:_DATA @N@\
 # endif
 # define INC(reg) add reg, reg, POUND 1
 # define DEC(reg) sub reg, reg, POUND 1
-#endif /* X86/ARM */
+#elif defined(RISCV64)
+/*
+ * TODO: riscv64
+ * TODO: this is a copy of AARCHXX
+ */
+# define REG_SCRATCH0 REG_R0
+# define REG_SCRATCH1 REG_R1
+# define REG_SCRATCH2 REG_R2
+# define REG_SP sp
+# define JUMP     b
+# define JUMP_NOT_EQUAL     b.ne
+# define RETURN  ret
+# define MOV16   mov
+# define INC(reg) add reg, reg, POUND 1
+# define DEC(reg) sub reg, reg, POUND 1
+#endif /* X86/ARM/RISCV64 */
 
 # define TRY_CXT_SETJMP_OFFS 0 /* offsetof(try_except_context_t, context) */
 

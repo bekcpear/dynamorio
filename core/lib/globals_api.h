@@ -458,6 +458,22 @@ typedef struct _instr_t instr_t;
 #    define _IF_NOT_AARCHXX(x) , x
 #endif
 
+#ifdef RISCV64
+#    define IF_RISCV64(x) x
+#    define IF_RISCV64_ELSE(x, y) x
+#    define IF_RISCV64_(x) x,
+#    define _IF_RISCV64(x) , x
+#    define IF_NOT_RISCV64(x)
+#    define _IF_NOT_RISCV64(x)
+#else
+#    define IF_RISCV64(x)
+#    define IF_RISCV64_ELSE(x, y) y
+#    define IF_RISCV64_(x)
+#    define _IF_RISCV64(x)
+#    define IF_NOT_RISCV64(x) x
+#    define _IF_NOT_RISCV64(x) , x
+#endif
+
 #ifdef ANDROID
 #    define IF_ANDROID(x) x
 #    define IF_ANDROID_ELSE(x, y) x

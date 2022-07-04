@@ -28,24 +28,24 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 # DAMAGE.
 
-# For cross-compiling on aarch64 Linux using gcc-aarch64-linux-gnu package:
-# - install AArch64 tool chain:
-#   $ sudo apt-get install g++-aarch64-linux-gnu
+# For cross-compiling on riscv64 Linux using gcc-riscv64-linux-gnu package:
+# - install RISCV64 tool chain:
+#   $ sudo apt-get install g++-riscv64-linux-gnu
 # - cross-compiling config
-#   $ cmake -DCMAKE_TOOLCHAIN_FILE=../dynamorio/make/toolchain-aarch64.cmake ../dynamorio
+#   $ cmake -DCMAKE_TOOLCHAIN_FILE=../dynamorio/make/toolchain-riscv64.cmake ../dynamorio
 # You may have to set CMAKE_FIND_ROOT_PATH to point to the target enviroment, e.g.
-# by passing -DCMAKE_FIND_ROOT_PATH=/usr/aarch64-linux-gnu on Debian-like systems.
+# by passing -DCMAKE_FIND_ROOT_PATH=/usr/riscv64-linux-gnu on Debian-like systems.
 set(CMAKE_SYSTEM_NAME Linux)
-set(CMAKE_SYSTEM_PROCESSOR aarch64)
+set(CMAKE_SYSTEM_PROCESSOR riscv64)
 set(TARGET_ABI "unknown-linux-gnu")
 # specify the cross compiler
-SET(CMAKE_C_COMPILER   aarch64-${TARGET_ABI}-gcc)
-SET(CMAKE_CXX_COMPILER aarch64-${TARGET_ABI}-g++)
+SET(CMAKE_C_COMPILER   riscv64-${TARGET_ABI}-gcc)
+SET(CMAKE_CXX_COMPILER riscv64-${TARGET_ABI}-g++)
 
 # To build the tests, we need to set where the target environment containing
 # the required library is. On Debian-like systems, this is
-# /usr/aarch64-linux-gnu.
-SET(CMAKE_FIND_ROOT_PATH "/usr/aarch64-${TARGET_ABI}")
+# /usr/riscv64-linux-gnu.
+SET(CMAKE_FIND_ROOT_PATH "/usr/riscv64-${TARGET_ABI}")
 # search for programs in the build host directories
 SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 # for libraries and headers in the target directories
@@ -56,13 +56,13 @@ SET(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 # If we don't set some of these, CMake will end up using the host version.
 # We want the full path, however, so we can pass EXISTS and other checks in
 # the our CMake code.
-find_program(GCC_FULL_PATH aarch64-${TARGET_ABI}-gcc)
+find_program(GCC_FULL_PATH riscv64-${TARGET_ABI}-gcc)
 if (NOT GCC_FULL_PATH)
-  message(FATAL_ERROR "Cross-compiler aarch64-${TARGET_ABI}-gcc not found")
+  message(FATAL_ERROR "Cross-compiler riscv64-${TARGET_ABI}-gcc not found")
 endif ()
 get_filename_component(GCC_DIR ${GCC_FULL_PATH} PATH)
-SET(CMAKE_LINKER       ${GCC_DIR}/aarch64-${TARGET_ABI}-ld      CACHE FILEPATH "linker")
-SET(CMAKE_ASM_COMPILER ${GCC_DIR}/aarch64-${TARGET_ABI}-as      CACHE FILEPATH "assembler")
-SET(CMAKE_OBJCOPY      ${GCC_DIR}/aarch64-${TARGET_ABI}-objcopy CACHE FILEPATH "objcopy")
-SET(CMAKE_STRIP        ${GCC_DIR}/aarch64-${TARGET_ABI}-strip   CACHE FILEPATH "strip")
-SET(CMAKE_CPP          ${GCC_DIR}/aarch64-${TARGET_ABI}-cpp     CACHE FILEPATH "cpp")
+SET(CMAKE_LINKER       ${GCC_DIR}/riscv64-${TARGET_ABI}-ld      CACHE FILEPATH "linker")
+SET(CMAKE_ASM_COMPILER ${GCC_DIR}/riscv64-${TARGET_ABI}-as      CACHE FILEPATH "assembler")
+SET(CMAKE_OBJCOPY      ${GCC_DIR}/riscv64-${TARGET_ABI}-objcopy CACHE FILEPATH "objcopy")
+SET(CMAKE_STRIP        ${GCC_DIR}/riscv64-${TARGET_ABI}-strip   CACHE FILEPATH "strip")
+SET(CMAKE_CPP          ${GCC_DIR}/riscv64-${TARGET_ABI}-cpp     CACHE FILEPATH "cpp")

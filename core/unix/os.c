@@ -142,6 +142,7 @@ typedef struct rlimit64 rlimit64_t;
                                                     "ldr " ASM_R3 ", [" ASM_R3 \
                                                     ", " ASM_R2 "] \n\t"
 #endif /* ARM */
+/* TODO: riscv64? */
 
 /* Prototype for all functions in .init_array. */
 typedef int (*init_fn_t)(int argc, char **argv, char **envp);
@@ -1639,7 +1640,26 @@ os_timeout(int time_in_milliseconds)
                                  : "r"(_base_offs), "r"(offs)                       \
                                  : ASM_R2, ASM_R3);                                 \
         } while (0)
-#endif /* X86/ARM */
+#elif defined(RISCV64)
+/*
+ * TODO: riscv64
+ * TODO: this is a copy of AARCHXX
+ */
+#    define WRITE_TLS_SLOT_IMM(imm, var)                                            \
+        do {                                                                        \
+        } while (0)
+#    define READ_TLS_SLOT_IMM(imm, var)                                             \
+        do {                                                                        \
+        } while (0)
+#    define WRITE_TLS_INT_SLOT_IMM WRITE_TLS_SLOT_IMM /* b/c 32-bit */
+#    define READ_TLS_INT_SLOT_IMM READ_TLS_SLOT_IMM   /* b/c 32-bit */
+#    define WRITE_TLS_SLOT(offs, var)                                               \
+        do {                                                                        \
+        } while (0)
+#    define READ_TLS_SLOT(offs, var)                                                \
+        do {                                                                        \
+        } while (0)
+#endif /* X86/ARM/RISCV64 */
 
 #ifdef X86
 /* We use this at thread init and exit to make it easy to identify
@@ -1732,6 +1752,26 @@ is_thread_tls_initialized(void)
             return false;
     }
 #elif defined(AARCHXX)
+    byte **dr_tls_base_addr;
+    if (tls_global_type == TLS_TYPE_NONE)
+        return false;
+    dr_tls_base_addr = (byte **)get_dr_tls_base_addr();
+    if (dr_tls_base_addr == NULL || *dr_tls_base_addr == NULL ||
+        /* We use the TLS slot's value to identify a now-exited thread (i#1578) */
+        *dr_tls_base_addr == TLS_SLOT_VAL_EXITED)
+        return false;
+    /* We would like to ASSERT is_dynamo_address(*tls_swap_slot) but that leads
+     * to infinite recursion for an address not in the vm_reserve area, as
+     * dynamo_vm_areas_start_reading() ending up calling
+     * deadlock_avoidance_unlock() which calls get_thread_private_dcontext()
+     * which comes here.
+     */
+    return true;
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCHXX
+     */
     byte **dr_tls_base_addr;
     if (tls_global_type == TLS_TYPE_NONE)
         return false;
@@ -1885,6 +1925,7 @@ os_set_app_tls_base(dcontext_t *dcontext, reg_id_t reg, void *base)
     return false;
 }
 #endif
+/* TODO: riscv64? */
 
 void *
 os_get_app_tls_base(dcontext_t *dcontext, reg_id_t reg)
@@ -1973,6 +2014,12 @@ get_segment_base(uint seg)
 #    endif /* HAVE_TLS */
 #elif defined(AARCHXX)
     /* XXX i#1551: should we rename/refactor to avoid "segment"? */
+    return (byte *)read_thread_register(seg);
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCHXX
+     */
     return (byte *)read_thread_register(seg);
 #endif
 }
@@ -2699,6 +2746,8 @@ os_swap_dr_tls(dcontext_t *dcontext, bool to_app)
      * For SYS_clone, we are ok with the parent's TLS being inherited until
      * new_thread_setup() calls set_thread_register_from_clone_record().
      */
+#elif defined(RISCV64)
+    /* TODO: riscv64 */
 #endif
 }
 
@@ -2759,6 +2808,11 @@ os_should_swap_state(void)
     /* -private_loader currently implies -mangle_app_seg, but let's be safe. */
     return (INTERNAL_OPTION(mangle_app_seg) && INTERNAL_OPTION(private_loader));
 #elif defined(AARCHXX)
+    return INTERNAL_OPTION(private_loader);
+#elif defined(AARCHXX)
+    /* TODO: riscv64
+     * TODO: this is a copy of AARCHXX
+     */
     return INTERNAL_OPTION(private_loader);
 #endif
 }
@@ -3942,12 +3996,14 @@ dr_create_client_thread(void (*func)(void *param), void *arg)
     void *tls = (void *)read_thread_register(LIB_SEG_TLS);
     write_thread_register(NULL);
 #    endif
+     /* TODO: riscv64? */
     thread_id_t newpid = dynamorio_clone(flags, xsp, NULL, NULL, NULL, client_thread_run);
     /* i#3526 switch DR's tls back to the original one before cloning. */
     os_clone_post(dcontext);
 #    ifdef AARCHXX
     write_thread_register(tls);
 #    endif
+     /* TODO: riscv64? */
     /* i#501 the app's tls was switched in os_clone_pre. */
     if (INTERNAL_OPTION(private_loader))
         os_switch_lib_tls(dcontext, false /*to dr*/);
@@ -6680,7 +6736,97 @@ os_switch_seg_to_context(dcontext_t *dcontext, reg_id_t seg, bool to_app)
     LOG(THREAD, LOG_LOADER, 2, "%s %s: set_tls swap success=%d for thread " TIDFMT "\n",
         __FUNCTION__, to_app ? "to app" : "to DR", res, d_r_get_thread_id());
     return res;
-#endif /* X86/AARCHXX */
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCHXX
+     */
+    bool res = false;
+    os_thread_data_t *ostd = (os_thread_data_t *)dcontext->os_field;
+    ASSERT(INTERNAL_OPTION(private_loader));
+    if (to_app) {
+        /* We need to handle being called when we're already in the requested state. */
+        ptr_uint_t cur_seg = read_thread_register(LIB_SEG_TLS);
+        if ((void *)cur_seg == os_tls->app_lib_tls_base)
+            return true;
+        bool app_mem_valid = true;
+        if (os_tls->app_lib_tls_base == NULL)
+            app_mem_valid = false;
+        else {
+            uint prot;
+            bool rc = get_memory_info(os_tls->app_lib_tls_base, NULL, NULL, &prot);
+            /* Rule out a garbage value, which happens in our own test
+             * common.allasm_aarch_isa.
+             * Also rule out an unwritable region, which seems to happen on arm
+             * where at process init the thread reg points at rodata in libc
+             * until properly set to a writable mmap later.
+             */
+            if (!rc || !TESTALL(MEMPROT_READ | MEMPROT_WRITE, prot))
+                app_mem_valid = false;
+        }
+        if (!app_mem_valid) {
+            /* XXX i#1578: For pure-asm apps that do not use libc, the app may have no
+             * thread register value.  For detach we would like to write a 0 back into
+             * the thread register, but it complicates our exit code, which wants access
+             * to DR's TLS between dynamo_thread_exit_common()'s call to
+             * dynamo_thread_not_under_dynamo() and its call to
+             * set_thread_private_dcontext(NULL).  For now we just leave our privlib
+             * segment in there.  It seems rather unlikely to cause a problem: app code
+             * is unlikely to read the thread register; it's going to assume it owns it
+             * and will just blindly write to it.
+             */
+            return true;
+        }
+        /* On switching to app's TLS, we need put DR's TLS base into app's TLS
+         * at the same offset so it can be loaded on entering code cache.
+         * Otherwise, the context switch code on entering fcache will fault on
+         * accessing DR's TLS.
+         * The app's TLS slot value is stored into privlib's TLS slot for
+         * later restore on switching back to privlib's TLS.
+         */
+        byte **priv_lib_tls_swap_slot =
+            (byte **)(ostd->priv_lib_tls_base + DR_TLS_BASE_OFFSET);
+        byte **app_lib_tls_swap_slot =
+            (byte **)(os_tls->app_lib_tls_base + DR_TLS_BASE_OFFSET);
+        LOG(THREAD, LOG_LOADER, 3,
+            "%s: switching to app: app slot=&" PFX " *" PFX ", priv slot=&" PFX " *" PFX
+            "\n",
+            __FUNCTION__, app_lib_tls_swap_slot, *app_lib_tls_swap_slot,
+            priv_lib_tls_swap_slot, *priv_lib_tls_swap_slot);
+        byte *dr_tls_base = *priv_lib_tls_swap_slot;
+        *priv_lib_tls_swap_slot = *app_lib_tls_swap_slot;
+        *app_lib_tls_swap_slot = dr_tls_base;
+        LOG(THREAD, LOG_LOADER, 2, "%s: switching to %s, setting coproc reg to 0x%x\n",
+            __FUNCTION__, (to_app ? "app" : "dr"), os_tls->app_lib_tls_base);
+        res = write_thread_register(os_tls->app_lib_tls_base);
+    } else {
+        /* We need to handle being called when we're already in the requested state. */
+        ptr_uint_t cur_seg = read_thread_register(LIB_SEG_TLS);
+        if ((void *)cur_seg == ostd->priv_lib_tls_base)
+            return true;
+        /* Restore the app's TLS slot that we used for storing DR's TLS base,
+         * and put DR's TLS base back to privlib's TLS slot.
+         */
+        byte **priv_lib_tls_swap_slot =
+            (byte **)(ostd->priv_lib_tls_base + DR_TLS_BASE_OFFSET);
+        byte **app_lib_tls_swap_slot =
+            (byte **)(os_tls->app_lib_tls_base + DR_TLS_BASE_OFFSET);
+        byte *dr_tls_base = *app_lib_tls_swap_slot;
+        LOG(THREAD, LOG_LOADER, 3,
+            "%s: switching to DR: app slot=&" PFX " *" PFX ", priv slot=&" PFX " *" PFX
+            "\n",
+            __FUNCTION__, app_lib_tls_swap_slot, *app_lib_tls_swap_slot,
+            priv_lib_tls_swap_slot, *priv_lib_tls_swap_slot);
+        *app_lib_tls_swap_slot = *priv_lib_tls_swap_slot;
+        *priv_lib_tls_swap_slot = dr_tls_base;
+        LOG(THREAD, LOG_LOADER, 2, "%s: switching to %s, setting coproc reg to 0x%x\n",
+            __FUNCTION__, (to_app ? "app" : "dr"), ostd->priv_lib_tls_base);
+        res = write_thread_register(ostd->priv_lib_tls_base);
+    }
+    LOG(THREAD, LOG_LOADER, 2, "%s %s: set_tls swap success=%d for thread " TIDFMT "\n",
+        __FUNCTION__, to_app ? "to app" : "to DR", res, d_r_get_thread_id());
+    return res;
+#endif /* X86/AARCHXX/RISCV64 */
 }
 
 #ifdef LINUX

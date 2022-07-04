@@ -141,6 +141,7 @@ typedef struct _ibl_entry_pc_t {
     byte *unlinked;
 } ibl_entry_pc_t;
 #endif
+/* TODO: riscv64? */
 
 /* All spill slots are grouped in a separate struct because with
  * -no_ibl_table_in_tls, only these slots are mapped to TLS (and the
@@ -157,6 +158,7 @@ typedef struct _spill_state_t {
     reg_t reg_stolen; /* slot for the stolen register */
 #elif defined(RISCV64)
     /* TODO: riscv64 */
+    /* TODO: this is a copy of AARCHXX*/
     reg_t r0, r1, r2, r3;
     /* These are needed for ldex/stex mangling and A64 icache_op_ic_ivau_asm. */
     reg_t r4, r5;
@@ -183,6 +185,7 @@ typedef struct _spill_state_t {
 #    endif
     /* TODO i#1575: coarse-grain NYI on ARM */
 #endif
+/* TODO: riscv64? */
 } spill_state_t;
 
 typedef struct _local_state_t {
@@ -227,7 +230,9 @@ typedef struct _local_state_extended_t {
 #    define SCRATCH_REG5 DR_REG_R5
 #    define SCRATCH_REG_LAST SCRATCH_REG5
 #elif defined(RISCV64)
-/* TODO: riscv64 */
+/* TODO: riscv64
+ * TODO: this is a copy of AARCHXX
+ * */
 #    define TLS_REG0_SLOT ((ushort)offsetof(spill_state_t, r0))
 #    define TLS_REG1_SLOT ((ushort)offsetof(spill_state_t, r1))
 #    define TLS_REG2_SLOT ((ushort)offsetof(spill_state_t, r2))
@@ -256,6 +261,7 @@ typedef struct _local_state_extended_t {
 #        define TLS_LDSTEX_FLAGS_SLOT ((ushort)offsetof(spill_state_t, ldstex_flags))
 #    endif
 #endif
+/* TODO: riscv64? */
 
 #define TABLE_OFFSET (offsetof(local_state_extended_t, table_space))
 #define TLS_MASK_SLOT(btype)                                              \
@@ -422,6 +428,7 @@ arch_reset_stolen_reg(void);
 void
 arch_mcontext_reset_stolen_reg(dcontext_t *dcontext, priv_mcontext_t *mc);
 #endif
+/* TODO: riscv64? */
 
 bool
 is_indirect_branch_lookup_routine(dcontext_t *dcontext, cache_pc pc);
@@ -459,6 +466,7 @@ get_stolen_reg_val(priv_mcontext_t *context);
 void
 set_stolen_reg_val(priv_mcontext_t *mc, reg_t newval);
 #endif
+/* TODO: riscv64? */
 const char *
 get_branch_type_name(ibl_branch_type_t branch_type);
 ibl_branch_type_t
@@ -1061,7 +1069,65 @@ fill_with_nops(dr_isa_mode_t isa_mode, byte *addr, size_t size);
 /* i#1906: alignment needed for the source address of data to load into the PC */
 #    define PC_LOAD_ADDR_ALIGN 4
 
-#endif /* ARM */
+/****************************************************************************/
+#elif defined(RISCV64)
+/*
+ * TODO: riscv64
+ * TODO: this is a copy of AARCHXX
+ */
+
+#    define FRAG_IS_THUMB(flags) false
+#    define FRAG_IS_32(flags) false
+
+#    define PC_AS_JMP_TGT(isa_mode, pc) \
+        ((isa_mode) == DR_ISA_ARM_THUMB ? (app_pc)(((ptr_uint_t)pc) | 1) : pc)
+#    define PC_AS_LOAD_TGT(isa_mode, pc) \
+        ((isa_mode) == DR_ISA_ARM_THUMB ? (app_pc)(((ptr_uint_t)pc) & ~0x1) : pc)
+
+#    define AARCH64_INSTR_SIZE 4
+#    define FRAGMENT_BASE_PREFIX_SIZE(flags) AARCH64_INSTR_SIZE
+#    define DIRECT_EXIT_STUB_SIZE(flags) \
+       (10 * AARCH64_INSTR_SIZE) /* see insert_exit_stub_other_flags */
+/* Size of data slot used to store address of linked fragment or fcache return routine.
+ * We reserve 12 bytes for the 8 byte address, so that we can store it in an 8-byte
+ * aligned address. This is required for atomicity of write operations.
+ */
+#    define DIRECT_EXIT_STUB_DATA_SLOT_ALIGNMENT_PADDING 4
+#    define DIRECT_EXIT_STUB_DATA_SZ \
+       (sizeof(app_pc) + DIRECT_EXIT_STUB_DATA_SLOT_ALIGNMENT_PADDING)
+
+/* FIXME i#1575: implement coarse-grain support */
+#    define STUB_COARSE_DIRECT_SIZE(flags) (ASSERT_NOT_IMPLEMENTED(false), 0)
+
+/* FIXME i#1551: we need these to all take in the dr_isa_mode_t */
+#    define ARM_NOP 0xe320f000
+#    define THUMB_NOP 0xbf00
+#    define ARM_BKPT 0xe1200070
+#    define THUMB_BKPT 0xbe00
+/* writes nops into the address range */
+#    define SET_TO_NOPS(isa_mode, addr, size) fill_with_nops(isa_mode, addr, size)
+/* writes debugbreaks into the address range */
+#    define SET_TO_DEBUG(addr, size) ASSERT_NOT_IMPLEMENTED(false)
+/* check if region is SET_TO_DEBUG */
+#    define IS_SET_TO_DEBUG(addr, size) (ASSERT_NOT_IMPLEMENTED(false), false)
+
+/* offset of the patchable region from the end of a cti */
+#    define CTI_PATCH_OFFSET 4
+/* size of the patch to a cti */
+#    define CTI_PATCH_SIZE 4
+
+/* offset of the patchable region from the end of a stub */
+#    define EXIT_STUB_PATCH_OFFSET 4
+/* size of the patch to a stub */
+#    define EXIT_STUB_PATCH_SIZE 4
+
+/* the most bytes we'll need to shift a patchable location for -pad_jmps */
+#    define MAX_PAD_SIZE 0
+
+/* i#1906: alignment needed for the source address of data to load into the PC */
+#    define PC_LOAD_ADDR_ALIGN 4
+
+#endif /* X86/ARM/RISCV64 */
 /****************************************************************************/
 
 /* evaluates to true if region crosses at most 1 padding boundary */
@@ -1271,6 +1337,16 @@ enum {
     CBR_SHORT_REWRITE_LENGTH = 6,
     SVC_THUMB_LENGTH = THUMB_SHORT_INSTR_SIZE, /* Thumb syscall instr */
     SVC_ARM_LENGTH = ARM_INSTR_SIZE,           /* ARM syscall instr */
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCH64
+     */
+    CBR_LONG_LENGTH = 4,
+    JMP_LONG_LENGTH = 4,
+    JMP_SHORT_LENGTH = 4,
+    CBR_SHORT_REWRITE_LENGTH = 4,
+    SVC_LENGTH = 4,
 #endif
 
 /* Not under defines so we can have code that is less cluttered */
@@ -1283,6 +1359,7 @@ enum {
     SYSCALL_LENGTH = 2,
     SYSENTER_LENGTH = 2,
 #endif
+/* TODO: riscv64? */
 };
 
 #define REL32_REACHABLE_OFFS(offs) ((offs) <= INT_MAX && (offs) >= INT_MIN)
@@ -1363,6 +1440,7 @@ append_trace_speculate_last_ibl(dcontext_t *dcontext, instrlist_t *trace,
 int
 fixup_indirect_trace_exit(dcontext_t *dcontext, instrlist_t *trace);
 #endif
+/* TODO: riscv64? */
 
 uint
 forward_eflags_analysis(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr);
@@ -1583,7 +1661,14 @@ typedef struct dr_jmp_buf_t {
 #elif defined(AARCH64)         /* for aarch64.asm */
 #    define REGS_IN_JMP_BUF 22 /* See dr_setjmp and dr_longjmp. */
     reg_t regs[REGS_IN_JMP_BUF];
-#endif                         /* X86/AARCH64/ARM */
+#elif defined(RISCV64)         /* for riscv64.asm */
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCH64
+     * */
+#    define REGS_IN_JMP_BUF 22 /* See dr_setjmp and dr_longjmp. */
+    reg_t regs[REGS_IN_JMP_BUF];
+#endif                         /* X86/AARCH64/ARM/RISCV64 */
 #if defined(UNIX) && defined(DEBUG)
     /* i#226/PR 492568: we avoid the cost of storing this by using the
      * mask in the fault's signal frame, but we do record it in debug
@@ -1723,7 +1808,12 @@ get_mcontext_frame_ptr(dcontext_t *dcontext, priv_mcontext_t *mc)
     case DR_ISA_ARM_A32: reg = mc->r11; break;
 #elif defined(AARCH64)
     case DR_ISA_ARM_A64: reg = mc->r29; break;
-#endif /* X86/ARM/AARCH64 */
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     */
+    case DR_ISA_RISCV64: reg = mc->r29; break;
+#endif /* X86/ARM/AARCH64/RISCV64 */
     default: ASSERT_NOT_REACHED(); reg = 0;
     }
     return reg;

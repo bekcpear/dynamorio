@@ -292,6 +292,23 @@ online_instru_t::insert_save_type_and_size(void *drcontext, instrlist_t *ilist,
         MINSERT(ilist, where,
                 XINST_CREATE_store(drcontext, OPND_CREATE_MEM32(base, disp),
                                    opnd_create_reg(scratch)));
+#elif defined(RISCV64)
+        /*
+         * TODO: riscv64
+         * TODO: this is a copy of AARCH64
+         */
+        scratch = reg_resize_to_opsz(scratch, OPSZ_4);
+        /* MOVZ scratch, #type */
+        MINSERT(ilist, where,
+                INSTR_CREATE_movz(drcontext, opnd_create_reg(scratch),
+                                  OPND_CREATE_INT(type), OPND_CREATE_INT8(0)));
+        /* MOVK scratch, #size, LSL #16 */
+        MINSERT(ilist, where,
+                INSTR_CREATE_movk(drcontext, opnd_create_reg(scratch),
+                                  OPND_CREATE_INT(size), OPND_CREATE_INT8(16)));
+        MINSERT(ilist, where,
+                XINST_CREATE_store(drcontext, OPND_CREATE_MEM32(base, disp),
+                                   opnd_create_reg(scratch)));
 #endif
     }
 }
@@ -356,6 +373,7 @@ online_instru_t::instrument_instr(void *drcontext, void *tag, void **bb_field,
         adjust = 0;
     }
 #endif
+/* TODO: riscv64? */
     DR_ASSERT(instr_is_app(app));
     app_pc pc = instr_get_app_pc(app);
     reg_id_t reg_tmp;

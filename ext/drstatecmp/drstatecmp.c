@@ -448,6 +448,7 @@ drstatecmp_check_xflags_value(const char *name, void *tag, uint reg_value,
         drstatecmp_report_error(name, tag);
 }
 #endif
+/* TODO: riscv64? */
 
 static void
 drstatecmp_check_simd_value
@@ -458,6 +459,16 @@ drstatecmp_check_simd_value
         drstatecmp_report_error("SIMD mismatch", tag);
 }
 #elif defined(AARCHXX)
+    (void *tag, dr_simd_t *value, dr_simd_t *expected)
+{
+    if (memcmp(value, expected, sizeof(dr_simd_t)))
+        drstatecmp_report_error("SIMD mismatch", tag);
+}
+#elif defined(RISCV64)
+/*
+ * TODO: riscv64
+ * TODO: this is a copy of AARCHXX
+ */
     (void *tag, dr_simd_t *value, dr_simd_t *expected)
 {
     if (memcmp(value, expected, sizeof(dr_simd_t)))
@@ -549,6 +560,47 @@ drstatecmp_check_machine_state(dr_mcontext_t *mc_instrumented, dr_mcontext_t *mc
 
     drstatecmp_check_xflags_value("xflags", tag, mc_instrumented->xflags,
                                   mc_expected->xflags);
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCHXX
+     */
+    drstatecmp_check_gpr_value("r0", tag, mc_instrumented->r0, mc_expected->r0);
+    drstatecmp_check_gpr_value("r1", tag, mc_instrumented->r1, mc_expected->r1);
+    drstatecmp_check_gpr_value("r2", tag, mc_instrumented->r2, mc_expected->r2);
+    drstatecmp_check_gpr_value("r3", tag, mc_instrumented->r3, mc_expected->r3);
+    drstatecmp_check_gpr_value("r4", tag, mc_instrumented->r4, mc_expected->r4);
+    drstatecmp_check_gpr_value("r5", tag, mc_instrumented->r5, mc_expected->r5);
+    drstatecmp_check_gpr_value("r6", tag, mc_instrumented->r6, mc_expected->r6);
+    drstatecmp_check_gpr_value("r7", tag, mc_instrumented->r7, mc_expected->r7);
+    drstatecmp_check_gpr_value("r8", tag, mc_instrumented->r8, mc_expected->r8);
+    drstatecmp_check_gpr_value("r9", tag, mc_instrumented->r9, mc_expected->r9);
+    drstatecmp_check_gpr_value("r10", tag, mc_instrumented->r10, mc_expected->r10);
+    drstatecmp_check_gpr_value("r11", tag, mc_instrumented->r11, mc_expected->r11);
+    drstatecmp_check_gpr_value("r12", tag, mc_instrumented->r12, mc_expected->r12);
+    drstatecmp_check_gpr_value("r13", tag, mc_instrumented->r13, mc_expected->r13);
+    drstatecmp_check_gpr_value("r14", tag, mc_instrumented->r14, mc_expected->r14);
+    drstatecmp_check_gpr_value("r15", tag, mc_instrumented->r15, mc_expected->r15);
+    drstatecmp_check_gpr_value("r16", tag, mc_instrumented->r16, mc_expected->r16);
+    drstatecmp_check_gpr_value("r17", tag, mc_instrumented->r17, mc_expected->r17);
+    drstatecmp_check_gpr_value("r18", tag, mc_instrumented->r18, mc_expected->r18);
+    drstatecmp_check_gpr_value("r19", tag, mc_instrumented->r19, mc_expected->r19);
+    drstatecmp_check_gpr_value("r20", tag, mc_instrumented->r20, mc_expected->r20);
+    drstatecmp_check_gpr_value("r21", tag, mc_instrumented->r21, mc_expected->r21);
+    drstatecmp_check_gpr_value("r22", tag, mc_instrumented->r22, mc_expected->r22);
+    drstatecmp_check_gpr_value("r23", tag, mc_instrumented->r23, mc_expected->r23);
+    drstatecmp_check_gpr_value("r24", tag, mc_instrumented->r24, mc_expected->r24);
+    drstatecmp_check_gpr_value("r25", tag, mc_instrumented->r25, mc_expected->r25);
+    drstatecmp_check_gpr_value("r26", tag, mc_instrumented->r26, mc_expected->r26);
+    drstatecmp_check_gpr_value("r27", tag, mc_instrumented->r27, mc_expected->r27);
+    drstatecmp_check_gpr_value("r28", tag, mc_instrumented->r28, mc_expected->r28);
+    drstatecmp_check_gpr_value("r29", tag, mc_instrumented->r29, mc_expected->r29);
+
+    if (!TEST(DRSTATECMP_SKIP_CHECK_LR, flags))
+        drstatecmp_check_gpr_value("lr", tag, mc_instrumented->lr, mc_expected->lr);
+
+    drstatecmp_check_xflags_value("xflags", tag, mc_instrumented->xflags,
+                                  mc_expected->xflags);
 #else
 #    error NYI
 #endif
@@ -594,6 +646,7 @@ drstatecmp_compare_state(void *drcontext, void *tag, instrlist_t *bb,
         instr_writes_to_exact_reg(term, DR_REG_LR, DR_QUERY_INCLUDE_COND_SRCS))
         flags |= DRSTATECMP_SKIP_CHECK_LR;
 #endif
+/* TODO: riscv64? */
 
 #ifdef X86
     /* Avoid false positives due to mismatches for undefined effect on flags by

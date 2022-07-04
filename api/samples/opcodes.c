@@ -67,6 +67,11 @@ enum {
     ISA_ARM_THUMB,
 #elif defined(AARCH64)
     ISA_ARM_A64,
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     */
+    ISA_RISCV64,
 #endif
     NUM_ISA_MODE,
 };
@@ -142,6 +147,11 @@ get_isa_mode_name(uint isa_mode)
     return (isa_mode == ISA_ARM_A32) ? "32-bit ARM" : "32-bit Thumb";
 #    elif defined(AARCH64)
     return "64-bit AArch64";
+#    elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     */
+    return "64-bit RISCV";
 #    else
     return "unknown";
 #    endif
@@ -201,6 +211,11 @@ get_count_isa_idx(void *drcontext)
     case DR_ISA_ARM_THUMB: return ISA_ARM_THUMB;
 #elif defined(AARCH64)
     case DR_ISA_ARM_A64: return ISA_ARM_A64;
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     */
+    case DR_ISA_RISCV64: return ISA_RISCV64;
 #endif
     default: DR_ASSERT(false); /* NYI */
     }

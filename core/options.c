@@ -1237,6 +1237,7 @@ check_option_compatibility_helper(int recurse_count)
         changed_options = true;
     }
 #    endif
+     /* TODO: riscv64? */
 #    ifdef EXPOSE_INTERNAL_OPTIONS
     if (DYNAMO_OPTION(vmm_block_size) < MIN_VMM_BLOCK_SIZE) {
         USAGE_ERROR("vmm_block_size (%d) must be >= %d, setting to min",

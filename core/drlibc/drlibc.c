@@ -189,6 +189,7 @@ get_cache_line_size(OUT size_t *dcache_line_size, OUT size_t *icache_line_size)
     return false;
 }
 #endif
+/* TODO: riscv64? */
 
 #ifdef UNIX
 /* Parse the first line of a "#!" script. If the input is recognised, the string

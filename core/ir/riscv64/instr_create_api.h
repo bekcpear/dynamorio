@@ -1,6 +1,5 @@
 /* **********************************************************
  * Copyright (c) 2011-2022 Google, Inc. All rights reserved.
- * Copyright (c) 2016-2018 ARM Limited. All rights reserved.
  * Copyright (c) 2002-2010 VMware, Inc. All rights reserved.
  * **********************************************************/
 
@@ -32,8 +31,13 @@
  * DAMAGE.
  */
 
-#ifndef DR_IR_MACROS_AARCH64_H
-#define DR_IR_MACROS_AARCH64_H 1
+/*
+ * TODO: riscv64
+ * TODO: this is a copy of AARCH64
+ */
+
+#ifndef DR_IR_MACROS_RISCV64_H
+#define DR_IR_MACROS_RISCV64_H 1
 
 /**
  * Used in an additional immediate source operand to a vector operation, denotes
@@ -3376,4 +3380,4 @@
  */
 #define INSTR_CREATE_fmov_scalar_imm(dc, Rd, f) instr_create_1dst_1src(dc, OP_fmov, Rd, f)
 
-#endif /* DR_IR_MACROS_AARCH64_H */
+#endif /* DR_IR_MACROS_RISCV64_H */

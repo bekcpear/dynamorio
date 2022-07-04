@@ -315,5 +315,14 @@ opnd_immed_float_arch(uint opcode);
 /* DR's stolen register for TLS access */
 extern reg_id_t dr_reg_stolen;
 #endif
+#ifdef RISCV64
+/* TODO: riscv64
+ * TODO: this is a copy of AARCHXX
+ */
+#    define DR_REG_STOLEN_MIN IF_X64_ELSE(DR_REG_X9, DR_REG_R8) /* DR_REG_SYSNUM + 1 */
+#    define DR_REG_STOLEN_MAX IF_X64_ELSE(DR_REG_X29, DR_REG_R12)
+/* DR's stolen register for TLS access */
+extern reg_id_t dr_reg_stolen;
+#endif
 
 #endif /* _OPND_H_ */

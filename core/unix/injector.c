@@ -74,6 +74,7 @@
 #if defined(LINUX) && defined(AARCH64)
 #    include <linux/ptrace.h> /* for struct user_pt_regs */
 #endif
+/* TODO: riscv64? */
 #include <sys/uio.h> /* for struct iovec */
 #include <sys/user.h>
 #include <sys/wait.h>
@@ -896,6 +897,15 @@ enum { MAX_SHELL_CODE = 4096 };
 #        define REG_PC_FIELD pc
 #        define REG_SP_FIELD sp
 #        define REG_RETVAL_FIELD regs[0] /* x0 in user_regs_struct */
+#    elif defined(DR_HOST_RISCV64)
+         /*
+          * TODO: riscv64
+          * TODO: this is just a copy of AARCH64
+          */
+#        define USER_REGS_TYPE user_pt_regs
+#        define REG_PC_FIELD pc
+#        define REG_SP_FIELD sp
+#        define REG_RETVAL_FIELD regs[0] /* x0 in user_regs_struct */
 #    endif
 
 enum { REG_PC_OFFSET = offsetof(struct USER_REGS_TYPE, REG_PC_FIELD) };
@@ -917,6 +927,12 @@ system_call_length(dr_isa_mode_t mode)
     return SVC_LENGTH;
 #    elif defined(ARM)
     return mode == DR_ISA_ARM_THUMB ? SVC_THUMB_LENGTH : SVC_ARM_LENGTH;
+#    elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is just a copy of AARCH64
+     */
+    return SVC_LENGTH;
 #    else
 #        error Unsupported arch.
 #    endif
@@ -930,6 +946,12 @@ enum { SVC_RAW = 0xd4000001 };
 #    elif defined(ARM)
 /* XXX: The arm one *could* have a predicate so the 1st nibble could be <0xe. */
 enum { SVC_ARM_RAW = 0xef000000, SVC_THUMB_RAW = 0xdf00 };
+#    elif defined(RISCV64)
+/*
+ * TODO: riscv64
+ * TODO: this is just a copy of AARCH64
+ */
+enum { SVC_RAW = 0xd4000001 };
 #    endif
 
 enum { ERESTARTSYS = 512, ERESTARTNOINTR = 513, ERESTARTNOHAND = 514 };
@@ -960,6 +982,7 @@ static const enum_name_pair_t pt_req_map[] = { { PTRACE_TRACEME, "PTRACE_TRACEME
 #    ifdef DR_HOST_AARCH64
                                                { PTRACE_GETREGSET, "PTRACE_GETREGSET" },
                                                { PTRACE_SETREGSET, "PTRACE_SETREGSET" },
+/* TODO: riscv64? */
 #    else
                                                { PTRACE_PEEKUSER, "PTRACE_PEEKUSER" },
                                                { PTRACE_POKEUSER, "PTRACE_POKEUSER" },
@@ -1022,6 +1045,7 @@ our_ptrace_getregs(pid_t pid, struct USER_REGS_TYPE *regs)
 #    ifdef AARCH64
     struct iovec iovec = { regs, sizeof(*regs) };
     return our_ptrace(PTRACE_GETREGSET, pid, (void *)NT_PRSTATUS, &iovec);
+/* TODO: riscv64? */
 #    else
     return our_ptrace(PTRACE_GETREGS, pid, NULL, regs);
 #    endif
@@ -1033,6 +1057,7 @@ our_ptrace_setregs(pid_t pid, struct USER_REGS_TYPE *regs)
 #    ifdef AARCH64
     struct iovec iovec = { regs, sizeof(*regs) };
     return our_ptrace(PTRACE_SETREGSET, pid, (void *)NT_PRSTATUS, &iovec);
+/* TODO: riscv64? */
 #    else
     return our_ptrace(PTRACE_SETREGS, pid, NULL, regs);
 #    endif
@@ -1088,6 +1113,7 @@ gen_push_string(void *dc, instrlist_t *ilist, const char *msg)
 #    ifdef AARCHXX
     msg_space = ALIGN_FORWARD(msg_space, 4);
 #    endif
+     /* TODO: riscv64? */
     instr_t *msg_instr = instr_build_bits(dc, OP_UNDECODED, msg_space);
     APP(ilist, XINST_CREATE_call(dc, opnd_create_instr(after_msg)));
     instr_set_raw_bytes(msg_instr, (byte *)msg, strlen(msg) + 1);
@@ -1111,6 +1137,7 @@ gen_push_string(void *dc, instrlist_t *ilist, const char *msg)
                          OPND_CREATE_INT8(1)));
     APP(ilist, INSTR_CREATE_push(dc, opnd_create_reg(DR_REG_LR)));
 #    endif
+     /* TODO: riscv64? */
 }
 
 static void
@@ -1172,6 +1199,7 @@ unexpected_trace_event(process_id_t pid, int sig_expected, int sig_actual)
         struct USER_REGS_TYPE regs;
         our_ptrace_getregs(pid, &regs);
         err_pc = (app_pc)regs.REG_PC_FIELD;
+     /* TODO: riscv64? */
 #    else
         our_ptrace(PTRACE_PEEKUSER, pid, (void *)REG_PC_OFFSET, &err_pc);
 #    endif
@@ -1238,6 +1266,12 @@ injectee_run_get_retval(dr_inject_info_t *info, void *dc, instrlist_t *ilist)
     app_mode = DR_ISA_ARM_A64;
 #    elif defined(ARM)
     app_mode = TEST(EFLAGS_T, regs.uregs[16]) ? DR_ISA_ARM_THUMB : DR_ISA_ARM_A32;
+#    elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is just a copy of AARCH64
+     */
+    app_mode = DR_ISA_ARM_A64;
 #    else
 #        error Unsupported arch.
 #    endif
@@ -1305,6 +1339,7 @@ injectee_run_get_retval(dr_inject_info_t *info, void *dc, instrlist_t *ilist)
         return r;
     regs.REG_PC_FIELD = saved_pc;
 #    else
+     /* TODO: riscv64? */
     r = our_ptrace(PTRACE_POKEUSER, info->pid, (void *)REG_PC_OFFSET, pc + offset);
     if (r < 0)
         return r;
@@ -1322,6 +1357,7 @@ injectee_run_get_retval(dr_inject_info_t *info, void *dc, instrlist_t *ilist)
         return r;
     ret = modified_regs.REG_RETVAL_FIELD;
 #    else
+     /* TODO: riscv64? */
     r = our_ptrace(PTRACE_PEEKUSER, info->pid,
                    (void *)offsetof(struct USER_REGS_TYPE, REG_RETVAL_FIELD), &ret);
     if (r < 0)
@@ -1598,7 +1634,45 @@ user_regs_to_mc(priv_mcontext_t *mc, struct USER_REGS_TYPE *regs)
     mc->r30 = regs->regs[30];
     mc->sp = regs->sp;
     mc->pc = (app_pc)regs->pc;
-#    endif /* X86/ARM */
+#    elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCH64
+     */
+    mc->r0 = regs->regs[0];
+    mc->r1 = regs->regs[1];
+    mc->r2 = regs->regs[2];
+    mc->r3 = regs->regs[3];
+    mc->r4 = regs->regs[4];
+    mc->r5 = regs->regs[5];
+    mc->r6 = regs->regs[6];
+    mc->r7 = regs->regs[7];
+    mc->r8 = regs->regs[8];
+    mc->r9 = regs->regs[9];
+    mc->r10 = regs->regs[10];
+    mc->r11 = regs->regs[11];
+    mc->r12 = regs->regs[12];
+    mc->r13 = regs->regs[13];
+    mc->r14 = regs->regs[14];
+    mc->r15 = regs->regs[15];
+    mc->r16 = regs->regs[16];
+    mc->r17 = regs->regs[17];
+    mc->r18 = regs->regs[18];
+    mc->r19 = regs->regs[19];
+    mc->r20 = regs->regs[20];
+    mc->r21 = regs->regs[21];
+    mc->r22 = regs->regs[22];
+    mc->r23 = regs->regs[23];
+    mc->r24 = regs->regs[24];
+    mc->r25 = regs->regs[25];
+    mc->r26 = regs->regs[26];
+    mc->r27 = regs->regs[27];
+    mc->r28 = regs->regs[28];
+    mc->r29 = regs->regs[29];
+    mc->r30 = regs->regs[30];
+    mc->sp = regs->sp;
+    mc->pc = (app_pc)regs->pc;
+#    endif /* X86/ARM/RISCV64 */
 }
 
 /* Detach from the injectee and re-exec ourselves as gdb with --pid.  This is
@@ -1687,6 +1761,13 @@ is_prev_bytes_syscall(process_id_t pid, app_pc src_pc, dr_isa_mode_t app_mode)
     if (app_mode == DR_ISA_ARM_THUMB && *(unsigned short *)instr_bytes == SVC_THUMB_RAW)
         return true;
     if (app_mode == DR_ISA_ARM_A32 && *(unsigned int *)instr_bytes == SVC_ARM_RAW)
+        return true;
+#    elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCH64
+     */
+    if (*(unsigned int *)instr_bytes == SVC_RAW)
         return true;
 #    endif
     return false;
@@ -1790,6 +1871,9 @@ inject_ptrace(dr_inject_info_t *info, const char *library_path)
     app_mode = DR_ISA_ARM_A64;
 #    elif defined(ARM)
     app_mode = TEST(EFLAGS_T, regs.uregs[16]) ? DR_ISA_ARM_THUMB : DR_ISA_ARM_A32;
+#    elif defined(RISCV64)
+    /* TODO: riscv64 */
+    app_mode = DR_ISA_RISCV64;
 #    else
 #        error Unsupported arch.
 #    endif
@@ -1853,7 +1937,7 @@ inject_ptrace(dr_inject_info_t *info, const char *library_path)
     strncpy(args.home_dir, getenv("HOME"), BUFFER_SIZE_ELEMENTS(args.home_dir));
     NULL_TERMINATE_BUFFER(args.home_dir);
 
-#    if defined(X86) || defined(AARCHXX)
+#    if defined(X86) || defined(AARCHXX) || defined(RISCV64) /* TODO: riscv64 */
     regs.REG_SP_FIELD -= REDZONE_SIZE; /* Need to preserve x64 red zone. */
     regs.REG_SP_FIELD -= sizeof(args); /* Allocate space for args. */
     regs.REG_SP_FIELD = ALIGN_BACKWARD(regs.REG_SP_FIELD, REGPARM_END_ALIGN);

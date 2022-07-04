@@ -57,10 +57,13 @@
  * legal size for an array.
  */
 #    define DR_FPSTATE_BUF_SIZE 1
+#elif defined(RISCV64)
+/* TODO: riscv64 */
+#    define DR_FPSTATE_BUF_SIZE 1
 #endif
 
 /** The alignment requirements of floating point state buffer. */
-#if defined(X86) || defined(AARCH64)
+#if defined(X86) || defined(AARCH64) || defined(RISCV64) /* TODO: riscv64 */
 #    define DR_FPSTATE_ALIGN 16
 #elif defined(ARM)
 #    define DR_FPSTATE_ALIGN 1

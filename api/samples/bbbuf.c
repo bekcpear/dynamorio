@@ -93,6 +93,7 @@ event_app_instruction(void *drcontext, void *tag, instrlist_t *bb, instr_t *inst
         return DR_EMIT_DEFAULT;
     }
 #endif
+/* TODO: riscv64? */
 
     /* load buffer pointer from TLS field */
     drx_buf_insert_load_buf_ptr(drcontext, buf, bb, inst, reg);
@@ -113,6 +114,7 @@ event_app_instruction(void *drcontext, void *tag, instrlist_t *bb, instr_t *inst
     if (drreg_unreserve_register(drcontext, bb, inst, reg2) != DRREG_SUCCESS)
         DR_ASSERT(false);
 #endif
+/* TODO: riscv64? */
 
     return DR_EMIT_DEFAULT;
 }

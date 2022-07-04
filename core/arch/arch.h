@@ -152,7 +152,10 @@ mixed_mode_enabled(void)
 #    define SCRATCH_REG5_OFFS R5_OFFSET
 #    define REG_OFFSET(reg) (R0_OFFSET + ((reg)-DR_REG_R0) * sizeof(reg_t))
 #elif defined(RISCV64)
-/* TODO: riscv64 */
+/*
+ * TODO: riscv64
+ * TODO: this is a copy of AARCHXX
+ */
 #    define R0_OFFSET ((MC_OFFS) + (offsetof(priv_mcontext_t, r0)))
 #    define REG0_OFFSET R0_OFFSET
 #    define R1_OFFSET ((MC_OFFS) + (offsetof(priv_mcontext_t, r1)))
@@ -602,6 +605,7 @@ instr_t *
 mangle_exclusive_monitor_op(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
                             instr_t *next_instr);
 #endif
+/* TODO: riscv64? */
 void
 mangle_insert_clone_code(dcontext_t *dcontext, instrlist_t *ilist,
                          instr_t *instr _IF_X86_64(gencode_mode_t mode));
@@ -684,6 +688,7 @@ insert_restore_inline_registers(dcontext_t *dcontext, instrlist_t *ilist, instr_
                                 void *ci);
 
 #endif
+/* TODO: riscv64? */
 
 #ifdef WINDOWS
 bool
@@ -751,6 +756,7 @@ instr_t *
 mangle_writes_thread_register(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
                               instr_t *next_instr);
 #endif /* AARCH64 */
+/* TODO: riscv64? */
 
 /* offsets within local_state_t used for specific scratch purposes */
 enum {
@@ -787,6 +793,7 @@ enum {
 #else
     DCONTEXT_BASE_SPILL_SLOT = TLS_REG3_SLOT,
 #endif
+/* TODO: riscv64? */
     PREFIX_XAX_SPILL_SLOT = TLS_REG0_SLOT,
 #ifdef HASHTABLE_STATISTICS
     HTABLE_STATS_SPILL_SLOT = TLS_HTABLE_STATS_SLOT,
@@ -962,6 +969,7 @@ typedef struct _generated_code_t {
 #ifdef AARCHXX
     byte *fcache_enter_gonative;
 #endif
+/* TODO: riscv64? */
 #ifdef WINDOWS
     byte *fcache_enter_indirect;
     byte *do_callback_return;
@@ -1245,6 +1253,7 @@ emit_do_syscall(dcontext_t *dcontext, generated_code_t *code, byte *pc,
 uint *
 insert_mov_imm(uint *pc, reg_id_t dst, ptr_int_t val);
 #endif
+/* TODO: riscv64? */
 
 #ifdef AARCHXX
 byte *
@@ -1546,6 +1555,7 @@ translate_x86_to_x64(dcontext_t *dcontext, instrlist_t *ilist, INOUT instr_t **i
 bool
 instr_is_ldstex_mangling(dcontext_t *dcontext, instr_t *inst);
 #endif
+/* TODO: riscv64? */
 
 /****************************************************************************
  * Platform-independent emit_utils_shared.c
@@ -1565,6 +1575,7 @@ get_fcache_return_tls_offs(dcontext_t *dcontext, uint flags);
 size_t
 get_ibl_entry_tls_offs(dcontext_t *dcontext, cache_pc ibl_entry);
 #endif
+/* TODO: riscv64? */
 
 void
 link_indirect_exit_arch(dcontext_t *dcontext, fragment_t *f, linkstub_t *l,
@@ -1811,4 +1822,5 @@ instrlist_convert_to_x86(instrlist_t *ilist);
 bool
 mrs_id_reg_supported(void);
 #endif
+/* TODO: riscv64? */
 #endif /* ARCH_H */

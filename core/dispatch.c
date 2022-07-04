@@ -499,6 +499,7 @@ dispatch_enter_fcache(dcontext_t *dcontext, fragment_t *targetf)
         PC_AS_JMP_TGT(FRAG_ISA_MODE(targetf->flags), FCACHE_PREFIX_ENTRY_PC(targetf))
 #else
         PC_AS_JMP_TGT(FRAG_ISA_MODE(targetf->flags), FCACHE_ENTRY_PC(targetf))
+        /* TODO: riscv64 */
 #endif
     );
 #ifdef UNIX

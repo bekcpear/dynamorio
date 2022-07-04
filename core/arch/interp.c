@@ -81,6 +81,7 @@
 #ifdef AARCH64
 #    include "build_ldstex.h"
 #endif
+/* TODO: riscv64? */
 
 enum { DIRECT_XFER_LENGTH = 5 };
 
@@ -2502,7 +2503,13 @@ bb_process_IAT_convertible_indjmp(dcontext_t *dcontext, build_bb_t *bb,
     /* FIXME i#1551, i#1569: NYI on ARM/AArch64 */
     ASSERT_NOT_IMPLEMENTED(false);
     return false;
-#endif /* X86/ARM */
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     */
+    ASSERT_NOT_IMPLEMENTED(false);
+    return false;
+#endif /* X86/ARM/RISCV64 */
 }
 
 /* Returns true if the current instr in the BB is an indirect call
@@ -2614,7 +2621,13 @@ bb_process_IAT_convertible_indcall(dcontext_t *dcontext, build_bb_t *bb,
     /* FIXME i#1551, i#1569: NYI on ARM/AArch64 */
     ASSERT_NOT_IMPLEMENTED(false);
     return false;
-#endif /* X86/ARM */
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     */
+    ASSERT_NOT_IMPLEMENTED(false);
+    return false;
+#endif /* X86/ARM/RISCV64 */
 }
 
 /* Called on instructions that save the FPU state */
@@ -2868,6 +2881,7 @@ client_process_bb(dcontext_t *dcontext, build_bb_t *bb)
                           "OP_isb must be last instruction in block");
         }
 #endif
+/* TODO: riscv64? */
 
         /* PR 307284: we didn't process syscalls and ints pre-client
          * so do so now to get bb->flags and bb->exit_type set
@@ -3875,6 +3889,7 @@ build_bb_ilist(dcontext_t *dcontext, build_bb_t *bb)
         else if (instr_get_opcode(bb->instr) == OP_isb)
             break;
 #endif
+/* TODO: riscv64? */
 #if 0 /*i#1313, i#1314*/
         else if (instr_get_opcode(bb->instr) == OP_getsec) {
             /* XXX i#1313: if we support CPL0 in the future we'll need to
@@ -4744,6 +4759,8 @@ build_native_exec_bb(dcontext_t *dcontext, build_bb_t *bb)
 
 #ifdef AARCH64
     ASSERT_NOT_IMPLEMENTED(false); /* FIXME i#1569 */
+#elif defined(RISCV64)
+    ASSERT_NOT_IMPLEMENTED(false); /* TODO: riscv64 */
 #else
     /* this is the jump to native code */
     instrlist_append(bb->ilist,
@@ -5648,6 +5665,10 @@ instr_is_trace_cmp(dcontext_t *dcontext, instr_t *inst)
     /* FIXME i#1668: NYI on ARM */
     ASSERT_NOT_IMPLEMENTED(DYNAMO_OPTION(disable_traces));
     return false;
+#elif defined(RISCV64)
+    /* TODO: riscv64 */
+    ASSERT_NOT_IMPLEMENTED(DYNAMO_OPTION(disable_traces));
+    return false;
 #endif
 }
 
@@ -5953,6 +5974,7 @@ fixup_cbr_on_stolen_reg(dcontext_t *dcontext, instrlist_t *trace, instr_t *targe
     return prev;
 }
 #endif
+/* TODO: riscv64? */
 
 /* Mangles an indirect branch in a trace where a basic block with tag "tag"
  * is being added as the next block beyond the indirect branch.
@@ -6242,7 +6264,10 @@ mangle_indirect_branch_in_trace(dcontext_t *dcontext, instrlist_t *trace,
 #elif defined(ARM)
     /* FIXME i#1551: NYI on ARM */
     ASSERT_NOT_IMPLEMENTED(false);
-#endif /* X86/ARM */
+#elif defined(RISCV64)
+    /* TODO: riscv64 */
+    ASSERT_NOT_IMPLEMENTED(false);
+#endif /* X86/ARM/RISCV64 */
     return added_size;
 }
 
@@ -6403,6 +6428,7 @@ fixup_last_cti(dcontext_t *dcontext, instrlist_t *trace, app_pc next_tag, uint n
 #else
             delete_after = instr_get_prev(targeter);
 #endif
+/* TODO: riscv64? */
             if (delete_after != NULL) {
                 LOG(THREAD, LOG_MONITOR, 4, "fixup_last_cti: removed ubr\n");
             }
@@ -8443,3 +8469,4 @@ fixup_indirect_trace_exit(dcontext_t *dcontext, instrlist_t *trace)
     return added_size;
 }
 #endif
+/* TODO: riscv64? */

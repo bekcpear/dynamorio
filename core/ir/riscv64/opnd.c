@@ -1,3 +1,8 @@
+/*
+ * TODO: riscv64
+ * TODO: this is a copy of AARCH64
+ */
+
 #include "../globals.h"
 #include "instr.h"
 #include "arch.h"

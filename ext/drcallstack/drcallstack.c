@@ -122,6 +122,17 @@ drcallstack_init_walk(dr_mcontext_t *mc, OUT drcallstack_walk_t **walk_out)
     /* r0..r30 is in the same order with no padding. */
     memcpy(&sc->SC_R0, &mc->r0, 31 * sizeof(sc->SC_R0));
     sc->SC_XSP = mc->xsp;
+#    elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCH64
+     */
+    /* unw_context_t matches at least the GPR portion of ucontext_t. */
+    sigcontext_t *sc = SIGCXT_FROM_UCXT(&walk->uc);
+    sc->SC_XIP = (ptr_uint_t)mc->pc;
+    /* r0..r30 is in the same order with no padding. */
+    memcpy(&sc->SC_R0, &mc->r0, 31 * sizeof(sc->SC_R0));
+    sc->SC_XSP = mc->xsp;
 #    elif defined(ARM)
     /* libunwind defines its own struct of 16 regs. */
     memcpy(&walk->uc.regs[0], &mc->r0, 16 * sizeof(walk->uc.regs[0]));

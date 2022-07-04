@@ -67,6 +67,7 @@ cpu_info_t cpu_info = { VENDOR_UNKNOWN,
 #ifdef AARCHXX
                         0,
 #endif
+/* TODO: riscv64? */
                         0,
                         0,
                         0,
@@ -77,6 +78,12 @@ cpu_info_t cpu_info = { VENDOR_UNKNOWN,
 #ifdef X86
                         { 0, 0, 0, 0 },
 #elif defined(AARCHXX)
+                        { 0, 0, 0 },
+#elif defined(RISCV64)
+/*
+ * TODO: riscv64
+ * TODO: this is a copy of AARCHXX
+ */
                         { 0, 0, 0 },
 #endif
                         { 0x6e6b6e75, 0x006e776f } };
@@ -138,6 +145,7 @@ proc_init(void)
         os_close(cpuinfo);
     }
 #endif
+/* TODO: riscv64? */
 }
 
 uint
@@ -195,6 +203,7 @@ proc_get_architecture(void)
     return cpu_info.architecture;
 }
 #endif
+/* TODO: riscv64? */
 
 features_t *
 proc_get_all_feature_bits(void)

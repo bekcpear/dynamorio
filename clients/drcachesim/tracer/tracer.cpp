@@ -1302,7 +1302,7 @@ enum {
     BBDUP_MODE_COUNT = 1,
 };
 
-#if defined(X86_64) || defined(AARCH64)
+#if defined(X86_64) || defined(AARCH64) || defined(RISCV64) /* TODO: riscv64 */
 #    define DELAYED_CHECK_INLINED 1
 #else
 /* XXX we don't have the inlining implemented yet for 32-bit architectures. */
@@ -1692,6 +1692,14 @@ insert_conditional_skip(void *drcontext, instrlist_t *ilist, instr_t *where,
     MINSERT(ilist, where,
             INSTR_CREATE_cbz(drcontext, opnd_create_instr(skip_label),
                              opnd_create_reg(reg_skip_if_zero)));
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCH64
+     */
+    MINSERT(ilist, where,
+            INSTR_CREATE_cbz(drcontext, opnd_create_instr(skip_label),
+                             opnd_create_reg(reg_skip_if_zero)));
 #endif
 }
 
@@ -1795,6 +1803,7 @@ instrument_clean_call(void *drcontext, instrlist_t *ilist, instr_t *where,
                 XINST_CREATE_load(drcontext, opnd_create_reg(reg_global),
                                   OPND_CREATE_ABSMEM(&tracing_window, OPSZ_PTR)));
 #endif
+/* TODO: riscv64? */
         dr_insert_read_raw_tls(drcontext, ilist, where, tls_seg,
                                tls_offs + sizeof(void *) * MEMTRACE_TLS_OFFS_WINDOW,
                                reg_mine);
@@ -1813,6 +1822,7 @@ instrument_clean_call(void *drcontext, instrlist_t *ilist, instr_t *where,
                 INSTR_CREATE_lea(drcontext, opnd_create_reg(reg_mine),
                                  OPND_CREATE_MEM_lea(reg_mine, reg_global, 1, 0)));
 #endif
+/* TODO: riscv64? */
         // To avoid writing a 0 on top of the redzone, we read the buffer value and add
         // that to the local ("mine") window minus the global window.  The redzone is
         // -1, so if we do mine minus global which will always be non-positive, we'll
@@ -2614,7 +2624,7 @@ event_inscount_app_instruction(void *drcontext, void *tag, instrlist_t *bb,
     num_instrs = (uint)(ptr_uint_t)user_data;
     drmgr_disable_auto_predication(drcontext, bb);
 #ifdef DELAYED_CHECK_INLINED
-#    if defined(X86_64) || defined(AARCH64)
+#    if defined(X86_64) || defined(AARCH64) || defined(RISCV64) /* TODO: riscv64 */
     instr_t *skip_call = INSTR_CREATE_label(drcontext);
 #        ifdef X86_64
     reg_id_t scratch = DR_REG_NULL;
@@ -2707,6 +2717,57 @@ event_inscount_app_instruction(void *drcontext, void *tag, instrlist_t *bb,
                                  /* If the top bit is still zero, skip the call. */
                                  opnd_create_reg(scratch2), OPND_CREATE_INT(63)));
     }
+#        elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCH64
+     */
+    reg_id_t scratch1, scratch2 = DR_REG_NULL;
+    if (instr_count_threshold() > DELAY_EXACT_THRESHOLD) {
+        /* See the x86_64 comment on using thread-local counters to avoid contention. */
+        if (drreg_reserve_register(drcontext, bb, where, NULL, &scratch1) !=
+            DRREG_SUCCESS)
+            FATAL("Fatal error: failed to reserve scratch register");
+        dr_insert_read_raw_tls(drcontext, bb, where, tls_seg,
+                               tls_offs + sizeof(void *) * MEMTRACE_TLS_OFFS_ICOUNTDOWN,
+                               scratch1);
+        /* We're counting down for an aflags-free comparison. */
+        MINSERT(bb, where,
+                XINST_CREATE_sub(drcontext, opnd_create_reg(scratch1),
+                                 OPND_CREATE_INT(num_instrs)));
+        dr_insert_write_raw_tls(drcontext, bb, where, tls_seg,
+                                tls_offs + sizeof(void *) * MEMTRACE_TLS_OFFS_ICOUNTDOWN,
+                                scratch1);
+        MINSERT(bb, where,
+                INSTR_CREATE_tbz(drcontext, opnd_create_instr(skip_call),
+                                 /* If the top bit is still zero, skip the call. */
+                                 opnd_create_reg(scratch1), OPND_CREATE_INT(63)));
+    } else {
+        /* We're counting down for an aflags-free comparison. */
+        if (!drx_insert_counter_update(
+                drcontext, bb, where, (dr_spill_slot_t)(SPILL_SLOT_MAX + 1) /*use drmgr*/,
+                (dr_spill_slot_t)(SPILL_SLOT_MAX + 1), &instr_count, -num_instrs,
+                DRX_COUNTER_64BIT | DRX_COUNTER_REL_ACQ))
+            DR_ASSERT(false);
+
+        if (drreg_reserve_register(drcontext, bb, where, NULL, &scratch1) !=
+            DRREG_SUCCESS)
+            FATAL("Fatal error: failed to reserve scratch register");
+        if (drreg_reserve_register(drcontext, bb, where, NULL, &scratch2) !=
+            DRREG_SUCCESS)
+            FATAL("Fatal error: failed to reserve scratch register");
+
+        instrlist_insert_mov_immed_ptrsz(drcontext, (ptr_int_t)&instr_count,
+                                         opnd_create_reg(scratch1), bb, where, NULL,
+                                         NULL);
+        MINSERT(bb, where,
+                XINST_CREATE_load(drcontext, opnd_create_reg(scratch2),
+                                  OPND_CREATE_MEMPTR(scratch1, 0)));
+        MINSERT(bb, where,
+                INSTR_CREATE_tbz(drcontext, opnd_create_instr(skip_call),
+                                 /* If the top bit is still zero, skip the call. */
+                                 opnd_create_reg(scratch2), OPND_CREATE_INT(63)));
+    }
 #        endif
 
     dr_insert_clean_call_ex(drcontext, bb, where, (void *)hit_instr_count_threshold,
@@ -2723,6 +2784,15 @@ event_inscount_app_instruction(void *drcontext, void *tag, instrlist_t *bb,
             DR_ASSERT(false);
     }
 #        elif defined(AARCH64)
+    if (drreg_unreserve_register(drcontext, bb, where, scratch1) != DRREG_SUCCESS ||
+        (scratch2 != DR_REG_NULL &&
+         drreg_unreserve_register(drcontext, bb, where, scratch2) != DRREG_SUCCESS))
+        DR_ASSERT(false);
+#        elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCH64
+     */
     if (drreg_unreserve_register(drcontext, bb, where, scratch1) != DRREG_SUCCESS ||
         (scratch2 != DR_REG_NULL &&
          drreg_unreserve_register(drcontext, bb, where, scratch2) != DRREG_SUCCESS))

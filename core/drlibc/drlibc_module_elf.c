@@ -114,7 +114,9 @@ is_elf_so_header_common(app_pc base, size_t size, bool memory)
             (memory && elf_header.e_ehsize != sizeof(ELF_HEADER_TYPE)) ||
             (memory &&
 #ifdef X64
-             elf_header.e_machine != EM_X86_64 && elf_header.e_machine != EM_AARCH64
+             elf_header.e_machine != EM_X86_64 &&
+             elf_header.e_machine != EM_AARCH64 &&
+             elf_header.e_machine != EM_RISCV /* TODO: riscv64 */
 #else
              elf_header.e_machine != EM_386 && elf_header.e_machine != EM_ARM
 #endif
@@ -129,7 +131,8 @@ is_elf_so_header_common(app_pc base, size_t size, bool memory)
         ASSERT_CURIOSITY(!memory ||
 #ifdef X64
                          elf_header.e_machine == EM_X86_64 ||
-                         elf_header.e_machine == EM_AARCH64
+                         elf_header.e_machine == EM_AARCH64 ||
+                         elf_header.e_machine == EM_RISCV /* TODO: riscv64 */
 #else
                          elf_header.e_machine == EM_386 || elf_header.e_machine == EM_ARM
 #endif
@@ -223,6 +226,10 @@ module_get_platform(file_t f, dr_platform_t *platform, dr_platform_t *alt_platfo
     case EM_X86_64:
 #ifdef EM_AARCH64
     case EM_AARCH64:
+#endif
+#ifdef EM_RISCV
+    /* TODO: riscv64 */
+    case EM_RISCV:
 #endif
         *platform = DR_PLATFORM_64BIT;
         break;

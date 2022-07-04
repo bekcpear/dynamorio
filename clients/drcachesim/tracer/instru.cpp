@@ -153,6 +153,7 @@ instru_t::get_aarch64_prefetch_type(ptr_int_t prfop)
     return TRACE_TYPE_PREFETCH;
 }
 #endif
+/* TODO: riscv64? */
 
 unsigned short
 instru_t::instr_to_prefetch_type(instr_t *instr)
@@ -177,6 +178,7 @@ instru_t::instr_to_prefetch_type(instr_t *instr)
     case OP_prfum:
         return get_aarch64_prefetch_type(opnd_get_immed_int(instr_get_src(instr, 0)));
 #endif
+/* TODO: riscv64? */
     default: return TRACE_TYPE_PREFETCH;
     }
 }
@@ -211,6 +213,7 @@ instru_t::is_aarch64_dc_zva_instr(instr_t *instr)
     return instr_get_opcode(instr) == OP_dc_zva;
 }
 #endif
+/* TODO: riscv64? */
 
 bool
 instru_t::instr_is_flush(instr_t *instr)
@@ -224,6 +227,7 @@ instru_t::instr_is_flush(instr_t *instr)
     if (is_aarch64_dcache_flush_op(instr) || is_aarch64_icache_flush_op(instr))
         return true;
 #endif
+/* TODO: riscv64? */
     return false;
 }
 
@@ -243,6 +247,7 @@ instru_t::instr_to_flush_type(instr_t *instr)
     if (is_aarch64_dcache_flush_op(instr))
         return TRACE_TYPE_DATA_FLUSH;
 #endif
+/* TODO: riscv64? */
     DR_ASSERT(false);
     return TRACE_TYPE_DATA_FLUSH; // unreachable.
 }

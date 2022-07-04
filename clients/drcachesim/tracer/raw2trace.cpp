@@ -899,6 +899,7 @@ instr_summary_t::construct(void *dcontext, app_pc block_start, INOUT app_pc *pc,
     if (is_dc_zva)
         desc->packed_ |= kIsAarch64DcZvaMask;
 #endif
+/* TODO: riscv64? */
 
 #ifdef X86
     if (instr_is_scatter(instr) || instr_is_gather(instr))

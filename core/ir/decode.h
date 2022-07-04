@@ -223,6 +223,7 @@ decode_raw_is_cond_branch_zero(dcontext_t *dcontext, byte *pc);
 byte *
 decode_raw_cond_branch_zero_target(dcontext_t *dcontext, byte *pc);
 #endif
+/* TODO: riscv64? */
 
 /* exported routines */
 
@@ -237,6 +238,13 @@ is_isa_mode_legal(dr_isa_mode_t mode);
  */
 #    define X64_CACHE_MODE_DC(dc) (X64_MODE_DC(dc) IF_X64(|| DYNAMO_OPTION(x86_to_x64)))
 #elif defined(AARCHXX)
+#    define X64_MODE_DC(dc) IF_X64_ELSE(true, false)
+#    define X64_CACHE_MODE_DC(dc) IF_X64_ELSE(true, false)
+#elif defined(RISCV64)
+/*
+ * TODO: riscv64
+ * TODO: this is a copy of AARCHXX
+ */
 #    define X64_MODE_DC(dc) IF_X64_ELSE(true, false)
 #    define X64_CACHE_MODE_DC(dc) IF_X64_ELSE(true, false)
 #endif

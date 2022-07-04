@@ -1647,6 +1647,25 @@ drreg_spill_aflags(void *drcontext, instrlist_t *ilist, instr_t *where, per_thre
     res = drreg_unreserve_register(drcontext, ilist, where, scratch);
     if (res != DRREG_SUCCESS)
         return res; /* XXX: undo already-inserted instrs? */
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCHXX
+     */
+    drreg_status_t res = DRREG_SUCCESS;
+    reg_id_t scratch;
+    res = drreg_reserve_reg_internal(drcontext, ilist, where, NULL, false, &scratch);
+    if (res != DRREG_SUCCESS)
+        return res;
+    dr_save_arith_flags_to_reg(drcontext, ilist, where, scratch);
+    ASSERT(pt->aflags.slot == MAX_SPILLS, "aflags slot not reset");
+    if (pt->aflags.slot == MAX_SPILLS) {
+        pt->aflags.slot = find_free_slot(drcontext, pt, ilist, where);
+    }
+    spill_reg(drcontext, pt, scratch, pt->aflags.slot, ilist, where);
+    res = drreg_unreserve_register(drcontext, ilist, where, scratch);
+    if (res != DRREG_SUCCESS)
+        return res; /* XXX: undo already-inserted instrs? */
 #endif
     return DRREG_SUCCESS;
 }
@@ -1720,6 +1739,22 @@ drreg_restore_aflags(void *drcontext, instrlist_t *ilist, instr_t *where,
             restore_reg(drcontext, pt, DR_REG_XAX, temp_slot, ilist, where, true);
     }
 #elif defined(AARCHXX)
+    drreg_status_t res = DRREG_SUCCESS;
+    reg_id_t scratch;
+    res = drreg_reserve_reg_internal(drcontext, ilist, where, NULL, false, &scratch);
+    if (res != DRREG_SUCCESS)
+        return res;
+    ASSERT(pt->aflags.slot != MAX_SPILLS, "Aflags slot not reserved");
+    restore_reg(drcontext, pt, scratch, pt->aflags.slot, ilist, where, release);
+    dr_restore_arith_flags_from_reg(drcontext, ilist, where, scratch);
+    res = drreg_unreserve_register(drcontext, ilist, where, scratch);
+    if (res != DRREG_SUCCESS)
+        return res; /* XXX: undo already-inserted instrs? */
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCHXX
+     */
     drreg_status_t res = DRREG_SUCCESS;
     reg_id_t scratch;
     res = drreg_reserve_reg_internal(drcontext, ilist, where, NULL, false, &scratch);

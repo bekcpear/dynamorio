@@ -730,24 +730,29 @@ atomic_dec_becomes_zero(volatile int *var)
  */
 #        define ATOMIC_1BYTE_READ(addr_src, addr_res)                \
             do {                                                     \
+              *addr_res = 1; \
             } while (0)
 #        define ATOMIC_1BYTE_WRITE(target, value, hot_patch)   \
             do {                                               \
+              (void) value; \
             } while (0)
 #        define ATOMIC_4BYTE_WRITE(target, value, hot_patch)                    \
             do {                                                                \
+              (void) value; \
             } while (0)
 #        define ATOMIC_4BYTE_ALIGNED_WRITE ATOMIC_4BYTE_WRITE
 #        define ATOMIC_4BYTE_ALIGNED_READ(addr_src, addr_res)       \
             do {                                                    \
+              *addr_res = 1; \
             } while (0)
 #        define ATOMIC_8BYTE_WRITE(target, value, hot_patch)   \
             do {                                               \
+              (void) value; \
             } while (0)
 #        define ATOMIC_8BYTE_ALIGNED_WRITE ATOMIC_8BYTE_WRITE
 #        define ATOMIC_8BYTE_ALIGNED_READ(addr_src, addr_res)       \
-            *addr_res = 1; \
             do { \
+              *addr_res = 1; \
             } while (0)
 
 #        define DEF_ATOMIC_incdec(fname, type, r, op)                             \
@@ -800,7 +805,7 @@ DEF_ATOMIC_incdec(ATOMIC_INC_int, int, "w", "add") DEF_ATOMIC_incdec(ATOMIC_INC_
     return *var;
 }
 
-#        define MEMORY_STORE_BARRIER() __asm__ __volatile__("dmb st")
+#        define MEMORY_STORE_BARRIER() __asm__ __volatile__("") /* TODO: riscv64 */
 /* i#4719: QEMU crashes on "wfi" so we use the superset "wfe".
  * XXX: Consider issuing "sev" on lock release?
  */

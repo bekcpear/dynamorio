@@ -119,6 +119,15 @@ instr_is_div(instr_t *instr, OUT opnd_t *opnd)
         *opnd = instr_get_src(instr, 1); /* divisor is 2nd src */
         return true;
     }
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCHXX
+     */
+    if (opc == OP_udiv) {
+        *opnd = instr_get_src(instr, 1); /* divisor is 2nd src */
+        return true;
+    }
 #else
 #    error NYI
 #endif

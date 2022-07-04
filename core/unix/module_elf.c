@@ -1411,6 +1411,7 @@ dr_symbol_export_iterator_stop(dr_symbol_export_iterator_t *dr_iter)
 ptr_int_t
 tlsdesc_resolver(struct tlsdesc_t *);
 #    else
+/* TODO: riscv64? */
 static ptr_int_t
 tlsdesc_resolver(struct tlsdesc_t *arg)
 {

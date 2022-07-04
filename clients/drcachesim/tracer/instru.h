@@ -258,6 +258,7 @@ public:
     static bool
     is_aarch64_dc_zva_instr(instr_t *instr);
 #endif
+/* TODO: riscv64? */
     static unsigned short
     instr_to_prefetch_type(instr_t *instr);
     static unsigned short

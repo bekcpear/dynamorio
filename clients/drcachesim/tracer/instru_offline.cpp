@@ -478,6 +478,7 @@ offline_instru_t::opnd_disp_is_elidable(opnd_t memop)
 #elif defined(AARCH32)
         /* Avoid complexities with PC bases which are completely elided separately. */
         && opnd_get_base(memop) != DR_REG_PC
+/* TODO: riscv64? */
 #endif
         ;
 }

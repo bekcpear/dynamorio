@@ -277,6 +277,7 @@ if (ZLIB_FOUND)
   target_link_libraries(prefetch_analyzer_launcher ${ZLIB_LIBRARIES})
   target_link_libraries(drmemtrace_raw2trace ${ZLIB_LIBRARIES})
   if (NOT AARCH64 AND NOT APPLE)
+    # TODO: riscv64?
     target_link_libraries(opcode_mix_launcher ${ZLIB_LIBRARIES})
   endif ()
 endif ()
@@ -374,6 +375,7 @@ restore_nonclient_flags(drraw2trace)
 restore_nonclient_flags(histogram_launcher)
 restore_nonclient_flags(prefetch_analyzer_launcher)
 if (NOT AARCH64 AND NOT APPLE)
+  # TODO: riscv64?
   restore_nonclient_flags(opcode_mix_launcher)
 endif ()
 restore_nonclient_flags(drmemtrace_simulator)
@@ -424,6 +426,7 @@ add_win32_flags(histogram_launcher)
 add_win32_flags(prefetch_analyzer_launcher)
 add_win32_flags(drmemtrace_raw2trace)
 if (NOT AARCH64 AND NOT APPLE)
+  # TODO: riscv64?
   add_win32_flags(opcode_mix_launcher)
 endif ()
 add_win32_flags(drmemtrace_simulator)
@@ -569,6 +572,7 @@ if (BUILD_TESTS)
     use_DynamoRIO_drmemtrace_tracer(tool.drcacheoff.burst_aarch64_sys)
     add_win32_flags(tool.drcacheoff.burst_aarch64_sys)
   endif ()
+  # TODO: riscv64?
 
   # XXX i#1997: dynamorio_static is not supported on Mac yet
   # FIXME i#2949: gcc 7.3 fails to link certain configs

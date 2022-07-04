@@ -672,6 +672,14 @@ opnd_create_far_base_disp_ex(reg_id_t seg, reg_id_t base_reg, reg_id_t index_reg
     opnd.value.base_disp.encode_zero_disp = (byte)encode_zero_disp;
     opnd.value.base_disp.force_full_disp = (byte)force_full_disp;
     opnd.value.base_disp.disp_short_addr = (byte)disp_short_addr;
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCH64
+     */
+    opnd.value.base_disp.pre_index = true;
+    opnd.value.base_disp.extend_type = DR_EXTEND_UXTX;
+    opnd.value.base_disp.scaled = false;
 #endif
     return opnd;
 }
@@ -745,6 +753,7 @@ opnd_create_base_disp_aarch64(reg_id_t base_reg, reg_id_t index_reg,
     return opnd;
 }
 #endif
+/* TODO: riscv64? */
 
 #undef opnd_get_base
 #undef opnd_get_disp
@@ -902,6 +911,7 @@ opnd_set_index_extend(opnd_t *opnd, dr_extend_type_t extend, bool scaled)
     return true;
 }
 #endif /* AARCH64 */
+/* TODO: riscv64? */
 
 bool
 opnd_is_disp_encode_zero(opnd_t opnd)
@@ -1179,6 +1189,15 @@ const reg_id_t d_r_regparms[] = {
 #    ifdef X64
     REGPARM_4,  REGPARM_5, REGPARM_6, REGPARM_7,
 #    endif
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCHXX
+     */
+    REGPARM_0,  REGPARM_1, REGPARM_2, REGPARM_3,
+#    ifdef X64
+    REGPARM_4,  REGPARM_5, REGPARM_6, REGPARM_7,
+#    endif
 #endif
     REG_INVALID
 };
@@ -1273,6 +1292,15 @@ opnd_replace_reg(opnd_t *opnd, reg_id_t old_reg, reg_id_t new_reg)
             *opnd = opnd_create_far_base_disp_ex(
                 s, b, i, sc, d, size, opnd_is_disp_encode_zero(*opnd),
                 opnd_is_disp_force_full(*opnd), opnd_is_disp_short_addr(*opnd));
+#elif defined(RISCV64)
+            /*
+             * TODO: riscv64
+             * TODO: this is a copy of AARCH64
+             */
+            bool scaled = false;
+            dr_extend_type_t extend = opnd_get_index_extend(*opnd, &scaled, NULL);
+            dr_opnd_flags_t flags = opnd_get_flags(*opnd);
+            *opnd = opnd_create_base_disp_aarch64(b, i, extend, scaled, d, flags, size);
 #endif
             return true;
         }
@@ -1381,6 +1409,17 @@ opnd_replace_reg_resize(opnd_t *opnd, reg_id_t old_reg, reg_id_t new_reg)
             *opnd = opnd_create_far_base_disp_ex(
                 new_s, new_b, new_i, sc, disp, size, opnd_is_disp_encode_zero(*opnd),
                 opnd_is_disp_force_full(*opnd), opnd_is_disp_short_addr(*opnd));
+#elif defined(RISCV64)
+            /*
+             * TODO: riscv64
+             * TODO: this is a copy of AARCH64
+             */
+            bool scaled = false;
+            dr_extend_type_t extend = opnd_get_index_extend(*opnd, &scaled, NULL);
+            dr_opnd_flags_t flags = opnd_get_flags(*opnd);
+            *opnd = opnd_create_base_disp_aarch64(new_b, new_i, extend, scaled, disp,
+                                                  flags, size);
+
 #endif
             return true;
         }
@@ -2161,6 +2200,35 @@ opnd_compute_address_priv(opnd_t opnd, priv_mcontext_t *mc)
             break;
         default: scaled_index = index_val;
         }
+#elif defined(RISCV64)
+        /*
+         * TODO: riscv64
+         * TODO: this is a copy of AARCH64
+         */
+        bool scaled = false;
+        uint amount = 0;
+        dr_extend_type_t type = opnd_get_index_extend(opnd, &scaled, &amount);
+        reg_t index_val = reg_get_value_priv(index, mc);
+        reg_t extended = 0;
+        uint msb = 0;
+        switch (type) {
+        default: CLIENT_ASSERT(false, "Unsupported extend type"); return NULL;
+        case DR_EXTEND_UXTW: extended = (index_val << (63u - 31u)) >> (63u - 31u); break;
+        case DR_EXTEND_SXTW:
+            extended = (index_val << (63u - 31u)) >> (63u - 31u);
+            msb = extended >> 31u;
+            if (msb == 1) {
+                extended = ((~0ull) << 32u) | extended;
+            }
+            break;
+        case DR_EXTEND_UXTX:
+        case DR_EXTEND_SXTX: extended = index_val; break;
+        }
+        if (scaled) {
+            scaled_index = extended << amount;
+        } else {
+            scaled_index = extended;
+        }
 #endif
     }
     return opnd_compute_address_helper(opnd, mc, scaled_index);
@@ -2200,6 +2268,13 @@ reg_32_to_16(reg_id_t reg)
 #elif defined(AARCHXX)
     CLIENT_ASSERT(false, "reg_32_to_16 not supported on ARM");
     return REG_NULL;
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCHXX
+     */
+    CLIENT_ASSERT(false, "reg_32_to_16 not supported on ARM");
+    return REG_NULL;
 #endif
 }
 
@@ -2220,6 +2295,13 @@ reg_32_to_8(reg_id_t reg)
     }
     return r8;
 #elif defined(AARCHXX)
+    CLIENT_ASSERT(false, "reg_32_to_8 not supported on ARM");
+    return REG_NULL;
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCHXX
+     */
     CLIENT_ASSERT(false, "reg_32_to_8 not supported on ARM");
     return REG_NULL;
 #endif
@@ -2244,6 +2326,7 @@ reg_64_to_32(reg_id_t reg)
 #    ifdef AARCH64
     if (reg == DR_REG_XZR)
         return DR_REG_WZR;
+     /* TODO: riscv64? */
 #    endif
     CLIENT_ASSERT(reg >= REG_START_64 && reg <= REG_STOP_64,
                   "reg_64_to_32: passed non-64-bit reg");
@@ -2538,6 +2621,37 @@ reg_get_size(reg_id_t reg)
     if (reg >= DR_REG_NZCV && reg <= DR_REG_FPSR)
         return OPSZ_8;
 #    endif
+    if (reg == DR_REG_TPIDRURW || reg == DR_REG_TPIDRURO)
+        return OPSZ_PTR;
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCHXX
+     */
+    if (reg >= DR_REG_Q0 && reg <= DR_REG_Q31)
+        return OPSZ_16;
+    if (reg >= DR_REG_D0 && reg <= DR_REG_D31)
+        return OPSZ_8;
+    if (reg >= DR_REG_S0 && reg <= DR_REG_S31)
+        return OPSZ_4;
+    if (reg >= DR_REG_H0 && reg <= DR_REG_H31)
+        return OPSZ_2;
+    if (reg >= DR_REG_B0 && reg <= DR_REG_B31)
+        return OPSZ_1;
+    if (reg == DR_REG_XZR)
+        return OPSZ_8;
+    if (reg == DR_REG_WZR)
+        return OPSZ_4;
+    if (reg >= DR_REG_MDCCSR_EL0 && reg <= DR_REG_SPSR_FIQ)
+        return OPSZ_8;
+    if (reg >= DR_REG_Z0 && reg <= DR_REG_Z31)
+        return OPSZ_SCALABLE;
+    if (reg >= DR_REG_P0 && reg <= DR_REG_P15)
+        return OPSZ_SCALABLE_PRED;
+    if (reg == DR_REG_CNTVCT_EL0)
+        return OPSZ_8;
+    if (reg >= DR_REG_NZCV && reg <= DR_REG_FPSR)
+        return OPSZ_8;
     if (reg == DR_REG_TPIDRURW || reg == DR_REG_TPIDRURO)
         return OPSZ_PTR;
 #endif

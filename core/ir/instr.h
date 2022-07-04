@@ -538,6 +538,7 @@ instr_saves_float_pc(instr_t *instr);
 bool
 instr_is_icache_op(instr_t *instr);
 #endif
+/* TODO: riscv64? */
 
 #ifdef ARM
 bool
@@ -682,6 +683,7 @@ instr_branch_type(instr_t *cti_instr);
 const char *
 get_opcode_name(int opc);
 #endif
+/* TODO: riscv64? */
 /* these routines can assume that instr's opcode is valid */
 bool
 instr_is_call_arch(instr_t *instr);
@@ -740,11 +742,13 @@ instr_reads_thread_register(instr_t *instr);
 bool
 instr_is_stolen_reg_move(instr_t *instr, bool *save, reg_id_t *reg);
 #endif
+/* TODO: riscv64? */
 
 #ifdef AARCH64
 bool
 instr_writes_thread_register(instr_t *instr);
 #endif
+/* TODO: riscv64? */
 
 /* N.B. : client meta routines (dr_insert_* etc.) should never use anything other
  * then TLS_XAX_SLOT unless the client has specified a slot to use as we let the
@@ -864,6 +868,14 @@ enum {
     CBNZ_BYTE_A = 0xb9, /* this assumes the top bit of the disp is 0 */
 };
 #elif defined(AARCH64)
+enum {
+    RAW_NOP_INST = 0xd503201f,
+};
+#elif defined(RISCV64)
+/*
+ * TODO: riscv64
+ * TODO: this is a copy of AARCH64
+ */
 enum {
     RAW_NOP_INST = 0xd503201f,
 };

@@ -321,6 +321,7 @@ drx_aflags_are_dead(instr_t *where)
 #    define SCRATCH_REG0 DR_REG_R0
 #    define SCRATCH_REG1 DR_REG_R1
 #endif
+/* TODO: riscv64? */
 
 /* insert a label instruction with note */
 static void
@@ -370,6 +371,19 @@ drx_save_arith_flags(void *drcontext, instrlist_t *ilist, instr_t *where, bool s
         MINSERT(ilist, where, instr);
     }
 #    elif defined(AARCHXX)
+    ASSERT(reg >= DR_REG_START_GPR && reg <= DR_REG_STOP_GPR, "reg must be a GPR");
+    if (save_reg) {
+        ASSERT(slot >= SPILL_SLOT_1 && slot <= SPILL_SLOT_MAX, "wrong spill slot");
+        dr_save_reg(drcontext, ilist, where, reg, slot);
+    }
+    MINSERT(ilist, where,
+            INSTR_CREATE_msr(drcontext, opnd_create_reg(DR_REG_CPSR),
+                             OPND_CREATE_INT_MSR_NZCVQG(), opnd_create_reg(reg)));
+#    elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCHXX
+     * */
     ASSERT(reg >= DR_REG_START_GPR && reg <= DR_REG_STOP_GPR, "reg must be a GPR");
     if (save_reg) {
         ASSERT(slot >= SPILL_SLOT_1 && slot <= SPILL_SLOT_MAX, "wrong spill slot");
@@ -435,11 +449,25 @@ drx_restore_arith_flags(void *drcontext, instrlist_t *ilist, instr_t *where,
         ASSERT(slot >= SPILL_SLOT_1 && slot <= SPILL_SLOT_MAX, "wrong spill slot");
         dr_restore_reg(drcontext, ilist, where, reg, slot);
     }
+#    elif defined(AARCHXX)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCHXX
+     * */
+    ASSERT(reg >= DR_REG_START_GPR && reg <= DR_REG_STOP_GPR, "reg must be a GPR");
+    instr =
+        INSTR_CREATE_mrs(drcontext, opnd_create_reg(reg), opnd_create_reg(DR_REG_CPSR));
+    instr_set_note(instr, NOTE_VAL(DRX_NOTE_AFLAGS_RESTORE_SAHF));
+    MINSERT(ilist, where, instr);
+    if (restore_reg) {
+        ASSERT(slot >= SPILL_SLOT_1 && slot <= SPILL_SLOT_MAX, "wrong spill slot");
+        dr_restore_reg(drcontext, ilist, where, reg, slot);
+    }
 #    endif
     ilist_insert_note_label(drcontext, ilist, where,
                             NOTE_VAL(DRX_NOTE_AFLAGS_RESTORE_END));
 }
-#endif /* X86 */
+#endif /* X86/ARM/RISCV64 */
 
 /* Check if current instrumentation can be merged into previous aflags
  * (or on ARM, GPR) save/restore inserted by drx_restore_arith_flags.
@@ -526,6 +554,13 @@ drx_insert_counter_update(void *drcontext, instrlist_t *ilist, instr_t *where,
 #elif defined(AARCHXX)
     bool save_regs = true;
     reg_id_t reg1, reg2;
+#elif defined(AARCHXX)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCHXX
+     * */
+    bool save_regs = true;
+    reg_id_t reg1, reg2;
 #endif
     bool is_64 = TEST(DRX_COUNTER_64BIT, flags);
     /* Requires drx_init(), where it didn't when first added. */
@@ -553,6 +588,10 @@ drx_insert_counter_update(void *drcontext, instrlist_t *ilist, instr_t *where,
     if (TEST(DRX_COUNTER_LOCK, flags)) {
 #ifdef AARCHXX
         /* TODO i#1551,i#1569: implement for AArchXX. */
+        ASSERT(false, "DRX_COUNTER_LOCK not implemented for AArchXX");
+        return false;
+#elif defined(RISCV64)
+        /* TODO: riscv64 */
         ASSERT(false, "DRX_COUNTER_LOCK not implemented for AArchXX");
         return false;
 #endif
@@ -683,6 +722,88 @@ drx_insert_counter_update(void *drcontext, instrlist_t *ilist, instr_t *where,
                 XINST_CREATE_store(drcontext, OPND_CREATE_MEMPTR(reg1, 0),
                                    opnd_create_reg(reg2)));
 #    endif
+    } else {
+        MINSERT(ilist, where,
+                XINST_CREATE_load(drcontext, opnd_create_reg(reg2),
+                                  OPND_CREATE_MEMPTR(reg1, 0)));
+        if (value >= 0) {
+            MINSERT(ilist, where,
+                    XINST_CREATE_add(drcontext, opnd_create_reg(reg2),
+                                     OPND_CREATE_INT(value)));
+        } else {
+            MINSERT(ilist, where,
+                    XINST_CREATE_sub(drcontext, opnd_create_reg(reg2),
+                                     OPND_CREATE_INT(-value)));
+        }
+        MINSERT(ilist, where,
+                XINST_CREATE_store(drcontext, OPND_CREATE_MEMPTR(reg1, 0),
+                                   opnd_create_reg(reg2)));
+    }
+    if (use_drreg) {
+        if (drreg_unreserve_register(drcontext, ilist, where, reg1) != DRREG_SUCCESS ||
+            drreg_unreserve_register(drcontext, ilist, where, reg2) != DRREG_SUCCESS)
+            return false;
+    } else if (save_regs) {
+        ilist_insert_note_label(drcontext, ilist, where,
+                                NOTE_VAL(DRX_NOTE_AFLAGS_RESTORE_BEGIN));
+        dr_restore_reg(drcontext, ilist, where, reg2, slot2);
+        dr_restore_reg(drcontext, ilist, where, reg1, slot);
+        ilist_insert_note_label(drcontext, ilist, where,
+                                NOTE_VAL(DRX_NOTE_AFLAGS_RESTORE_END));
+    }
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCHXX
+     */
+    ASSERT(false, "DRX_COUNTER_64BIT is not implemented for RISCV64");
+
+    if (use_drreg) {
+        if (drreg_reserve_register(drcontext, ilist, where, NULL, &reg1) !=
+                DRREG_SUCCESS ||
+            drreg_reserve_register(drcontext, ilist, where, NULL, &reg2) != DRREG_SUCCESS)
+            return false;
+    } else {
+        reg1 = SCRATCH_REG0;
+        reg2 = SCRATCH_REG1;
+        /* merge w/ prior restore */
+        if (save_regs) {
+            instr = merge_prev_drx_spill(ilist, where, false /*!aflags*/);
+            if (instr != NULL) {
+                save_regs = false;
+                where = instr;
+            }
+        }
+        if (save_regs) {
+            dr_save_reg(drcontext, ilist, where, reg1, slot);
+            dr_save_reg(drcontext, ilist, where, reg2, slot2);
+        }
+    }
+    /* XXX: another optimization is to look for the prior increment's
+     * address being near this one, and add to reg1 instead of
+     * taking 2 instrs to load it fresh.
+     */
+    /* Update the counter either with release-acquire semantics (when the
+     * DRX_COUNTER_REL_ACQ flag is on) or without any barriers.
+     */
+    instrlist_insert_mov_immed_ptrsz(drcontext, (ptr_int_t)addr, opnd_create_reg(reg1),
+                                     ilist, where, NULL, NULL);
+    if (TEST(DRX_COUNTER_REL_ACQ, flags)) {
+        MINSERT(ilist, where,
+                INSTR_CREATE_ldar(drcontext, opnd_create_reg(reg2),
+                                  OPND_CREATE_MEMPTR(reg1, 0)));
+        if (value >= 0) {
+            MINSERT(ilist, where,
+                    XINST_CREATE_add(drcontext, opnd_create_reg(reg2),
+                                     OPND_CREATE_INT(value)));
+        } else {
+            MINSERT(ilist, where,
+                    XINST_CREATE_sub(drcontext, opnd_create_reg(reg2),
+                                     OPND_CREATE_INT(-value)));
+        }
+        MINSERT(ilist, where,
+                INSTR_CREATE_stlr(drcontext, OPND_CREATE_MEMPTR(reg1, 0),
+                                  opnd_create_reg(reg2)));
     } else {
         MINSERT(ilist, where,
                 XINST_CREATE_load(drcontext, opnd_create_reg(reg2),

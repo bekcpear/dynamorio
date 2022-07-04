@@ -120,6 +120,7 @@ reg_spill_tls_offs(reg_id_t reg)
          * and must be special-cased vs other spills.
          */
 #endif
+/* TODO: riscv64? */
     }
     /* don't assert if another reg passed: used on random regs looking for spills */
     return -1;
@@ -173,6 +174,7 @@ dump_emitted_routines(dcontext_t *dcontext, file_t file, const char *code_descri
             else if (last_pc == code->fcache_enter_gonative)
                 print_file(file, "fcache_enter_gonative:\n");
 #    endif
+     /* TODO: riscv64? */
 #    ifdef WINDOWS
             else if (last_pc == code->fcache_enter_indirect)
                 print_file(file, "fcache_enter_indirect:\n");
@@ -405,6 +407,7 @@ shared_gencode_emit(generated_code_t *gencode _IF_X86_64(bool x86_mode))
     gencode->fcache_enter_gonative = pc;
     pc = emit_fcache_enter_gonative(GLOBAL_DCONTEXT, gencode, pc);
 #endif
+/* TODO: riscv64? */
 
 #if defined(X86) && defined(X64)
 #    ifdef WINDOWS
@@ -432,6 +435,7 @@ shared_gencode_emit(generated_code_t *gencode _IF_X86_64(bool x86_mode))
     pc = emit_do_clone_syscall(GLOBAL_DCONTEXT, gencode, pc, gencode->fcache_return,
                                true /*shared*/, &gencode->do_clone_syscall_offs);
 #    endif
+     /* TODO: riscv64? */
 #endif
 
     if (USE_SHARED_GENCODE_ALWAYS()) {
@@ -644,6 +648,7 @@ arch_mcontext_reset_stolen_reg(dcontext_t *dcontext, priv_mcontext_t *mc)
     set_stolen_reg_val(mc, (reg_t)os_get_dr_tls_base(dcontext));
 }
 #endif /* AARCHXX */
+/* TODO: riscv64? */
 
 #if defined(X86) && defined(X64)
 /* Sets other-mode ibl targets, for mixed-mode and x86_to_x64 mode */
@@ -723,6 +728,7 @@ d_r_arch_init(void)
     dr_reg_stolen = DR_REG_R0 + DYNAMO_OPTION(steal_reg);
     ASSERT(dr_reg_stolen >= DR_REG_STOLEN_MIN && dr_reg_stolen <= DR_REG_STOLEN_MAX)
 #endif
+/* TODO: riscv64? */
 
     /* Ensure we have no unexpected padding inside structs that include
      * priv_mcontext_t (app_state_at_intercept_t and dcontext_t) */
@@ -1223,6 +1229,7 @@ arch_thread_init(dcontext_t *dcontext)
     ASSERT(dcontext->private_code == NULL);
     return;
 #endif
+/* TODO: riscv64? */
 
     /* For detach on windows need to use a separate mmap so we can leave this
      * memory around in case of outstanding callbacks when we detach.  Without
@@ -1893,6 +1900,7 @@ get_fcache_enter_gonative_routine(dcontext_t *dcontext)
 #else
     return fcache_enter_routine(dcontext);
 #endif
+/* TODO: riscv64? */
 }
 
 cache_pc
@@ -3097,7 +3105,13 @@ hook_vsyscall_return:
      */
     ASSERT(!method_changing);
     return false;
-#    endif /* X86/ARM */
+#    elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     */
+    ASSERT(!method_changing);
+    return false;
+#    endif /* X86/ARM/RISCV64 */
 }
 
 bool
@@ -3138,7 +3152,13 @@ unhook_vsyscall(void)
 #    elif defined(AARCHXX)
     ASSERT_NOT_IMPLEMENTED(get_syscall_method() != SYSCALL_METHOD_SYSENTER);
     return false;
-#    endif /* X86/ARM */
+#    elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     */
+    ASSERT_NOT_IMPLEMENTED(get_syscall_method() != SYSCALL_METHOD_SYSENTER);
+    return false;
+#    endif /* X86/ARM/RISCV64 */
 }
 #endif     /* LINUX */
 
@@ -3160,7 +3180,14 @@ check_syscall_method(dcontext_t *dcontext, instr_t *instr)
 #elif defined(AARCHXX)
     if (instr_get_opcode(instr) == OP_svc)
         new_method = SYSCALL_METHOD_SVC;
-#endif /* X86/ARM */
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCHXX
+     */
+    if (instr_get_opcode(instr) == OP_svc)
+        new_method = SYSCALL_METHOD_SVC;
+#endif /* X86/ARM/RISCV64 */
     else
         ASSERT_NOT_REACHED();
 
@@ -3663,7 +3690,28 @@ dump_mcontext(priv_mcontext_t *context, file_t f, bool dump_xml)
                    "\n\t\tr28=\"" PFX "\"\n\t\tr29=\"" PFX "\""
                    "\n\t\tr30=\"" PFX "\"\n\t\tr31=\"" PFX "\""
 #    endif /* X64 */
-#endif     /* X86/ARM */
+#elif defined(RISCV64)
+                   /*
+                    * TODO: riscv64
+                    * TODO: this is a copy of AARCHXX
+                    */
+                   "\n\t\tr0=\"" PFX "\"\n\t\tr1=\"" PFX "\""
+                   "\n\t\tr2=\"" PFX "\"\n\t\tr3=\"" PFX "\""
+                   "\n\t\tr4=\"" PFX "\"\n\t\tr5=\"" PFX "\""
+                   "\n\t\tr6=\"" PFX "\"\n\t\tr7=\"" PFX "\""
+                   "\n\t\tr8=\"" PFX "\"\n\t\tr9=\"" PFX "\""
+                   "\n\t\tr10=\"" PFX "\"\n\t\tr11=\"" PFX "\""
+                   "\n\t\tr12=\"" PFX "\"\n\t\tr13=\"" PFX "\""
+                   "\n\t\tr14=\"" PFX "\"\n\t\tr15=\"" PFX "\""
+                   "\n\t\tr16=\"" PFX "\"\n\t\tr17=\"" PFX "\""
+                   "\n\t\tr18=\"" PFX "\"\n\t\tr19=\"" PFX "\""
+                   "\n\t\tr20=\"" PFX "\"\n\t\tr21=\"" PFX "\""
+                   "\n\t\tr22=\"" PFX "\"\n\t\tr23=\"" PFX "\""
+                   "\n\t\tr24=\"" PFX "\"\n\t\tr25=\"" PFX "\""
+                   "\n\t\tr26=\"" PFX "\"\n\t\tr27=\"" PFX "\""
+                   "\n\t\tr28=\"" PFX "\"\n\t\tr29=\"" PFX "\""
+                   "\n\t\tr30=\"" PFX "\"\n\t\tr31=\"" PFX "\""
+#endif     /* X86/ARM/RISCV64 */
                  : "priv_mcontext_t @" PFX "\n"
 #ifdef X86
                    "\txax = " PFX "\n\txbx = " PFX "\n\txcx = " PFX "\n\txdx = " PFX "\n"
@@ -3683,7 +3731,20 @@ dump_mcontext(priv_mcontext_t *context, file_t f, bool dump_xml)
                    "\tr24 = " PFX "\n\tr25 = " PFX "\n\tr26 = " PFX "\n\tr27 = " PFX "\n"
                    "\tr28 = " PFX "\n\tr29 = " PFX "\n\tr30 = " PFX "\n\tr31 = " PFX "\n"
 #    endif /* X64 */
-#endif     /* X86/ARM */
+#elif defined(RISCV64)
+                   /*
+                    * TODO: riscv64
+                    * TODO: this is a copy of AARCHXX
+                    */
+                   "\tr0  = " PFX "\n\tr1  = " PFX "\n\tr2  = " PFX "\n\tr3  = " PFX "\n"
+                   "\tr4  = " PFX "\n\tr5  = " PFX "\n\tr6  = " PFX "\n\tr7  = " PFX "\n"
+                   "\tr8  = " PFX "\n\tr9  = " PFX "\n\tr10 = " PFX "\n\tr11 = " PFX "\n"
+                   "\tr12 = " PFX "\n\tr13 = " PFX "\n\tr14 = " PFX "\n\tr15 = " PFX "\n"
+                   "\tr16 = " PFX "\n\tr17 = " PFX "\n\tr18 = " PFX "\n\tr19 = " PFX "\n"
+                   "\tr20 = " PFX "\n\tr21 = " PFX "\n\tr22 = " PFX "\n\tr23 = " PFX "\n"
+                   "\tr24 = " PFX "\n\tr25 = " PFX "\n\tr26 = " PFX "\n\tr27 = " PFX "\n"
+                   "\tr28 = " PFX "\n\tr29 = " PFX "\n\tr30 = " PFX "\n\tr31 = " PFX "\n"
+#endif     /* X86/ARM/RISCV64 */
         ,
         context,
 #ifdef X86
@@ -3704,7 +3765,18 @@ dump_mcontext(priv_mcontext_t *context, file_t f, bool dump_xml)
         context->r21, context->r22, context->r23, context->r24, context->r25,
         context->r26, context->r27, context->r28, context->r29, context->r30, context->r31
 #    endif /* X64 */
-#endif     /* X86/ARM */
+#elif defined(RISCV64)
+       /*
+        * TODO: riscv64
+        * TODO: this is a copy of AARCHXX
+        */
+        context->r0, context->r1, context->r2, context->r3, context->r4, context->r5,
+        context->r6, context->r7, context->r8, context->r9, context->r10, context->r11,
+        context->r12, context->r13, context->r14, context->r15,
+        context->r16, context->r17, context->r18, context->r19, context->r20,
+        context->r21, context->r22, context->r23, context->r24, context->r25,
+        context->r26, context->r27, context->r28, context->r29, context->r30, context->r31
+#endif     /* X86/ARM/RISCV64 */
     );
 
 #ifdef X86
@@ -3756,6 +3828,22 @@ dump_mcontext(priv_mcontext_t *context, file_t f, bool dump_xml)
             print_file(f, dump_xml ? "\"\n" : "\n");
         }
     }
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCHXX
+     */
+    {
+        int i, j;
+        /* XXX: should be proc_num_simd_saved(). */
+        for (i = 0; i < proc_num_simd_registers(); i++) {
+            print_file(f, dump_xml ? "\t\tqd= \"0x" : "\tq%-3d= 0x", i);
+            for (j = 0; j < 4; j++) {
+                print_file(f, "%08x ", context->simd[i].u32[j]);
+            }
+            print_file(f, dump_xml ? "\"\n" : "\n");
+        }
+    }
 #endif
 
     print_file(f,
@@ -3777,6 +3865,7 @@ set_stolen_reg_val(priv_mcontext_t *mc, reg_t newval)
     *(reg_t *)(((byte *)mc) + opnd_get_reg_dcontext_offs(dr_reg_stolen)) = newval;
 }
 #endif
+/* TODO: riscv64? */
 
 #ifdef PROFILE_RDTSC
 /* This only works on Pentium I or later */

@@ -163,7 +163,14 @@ typedef struct _tcb_head_t {
     void *dtv;
     void *private;
     byte padding[2]; /* make it 16-byte align */
-#endif /* X86/ARM */
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is just a copy of AArch64
+     */
+    void *dtv;
+    void *private;
+#endif /* X86/ARM/RISCV64 */
 } tcb_head_t;
 
 #ifdef X86
@@ -183,7 +190,21 @@ typedef struct _dr_pthread_t {
 #    define TLS_PRE_TCB_SIZE sizeof(dr_pthread_t)
 #    define LIBC_PTHREAD_SIZE 0x4c0
 #    define LIBC_PTHREAD_TID_OFFSET 0x68
-#endif /* X86/ARM */
+#elif defined(RISCV64)
+typedef struct _dr_pthread_t {
+    /*
+     * TODO: riscv64
+     * TODO: this is just a copy of AARCHXX
+     */
+    byte data1[0x68]; /* # of bytes before tid within pthread */
+    process_id_t tid;
+    thread_id_t pid;
+    byte data2[0x450]; /* # of bytes after pid within pthread */
+} dr_pthread_t;
+#    define TLS_PRE_TCB_SIZE sizeof(dr_pthread_t)
+#    define LIBC_PTHREAD_SIZE 0x4c0
+#    define LIBC_PTHREAD_TID_OFFSET 0x68
+#endif /* X86/ARM/RISCV64 */
 
 #ifdef X86
 /* An estimate of the size of the static TLS data before the thread pointer that
@@ -203,6 +224,12 @@ typedef struct _dr_pthread_t {
 /* FIXME i#1551, i#1569: investigate the difference between ARM and X86 on TLS.
  * On ARM, it seems that TLS variables are not put before the thread pointer
  * as they are on X86.
+ */
+#    define APP_LIBC_TLS_SIZE 0
+#elif defined(RISCV64)
+/*
+ * TODO: riscv64
+ * TODO: this is just a copy of AARCHXX
  */
 #    define APP_LIBC_TLS_SIZE 0
 #endif
@@ -321,6 +348,7 @@ privload_tls_init(void *app_tp)
     ASSERT(TLS_PRE_TCB_SIZE == LIBC_PTHREAD_SIZE);
     ASSERT(LIBC_PTHREAD_TID_OFFSET == offsetof(dr_pthread_t, tid));
 #endif
+/* TODO: riscv64? */
     LOG(GLOBAL, LOG_LOADER, 2, "%s: allocated %d at " PFX "\n", __FUNCTION__,
         client_tls_alloc_size, dr_tp);
     dr_tp = dr_tp + client_tls_alloc_size - tcb_size;
@@ -344,6 +372,7 @@ privload_tls_init(void *app_tp)
         dp->pid = get_process_id();
         dp->tid = get_sys_thread_id();
 #endif
+/* TODO: riscv64? */
     }
     /* We do not assert or warn on a truncated read as it does happen when TCB
      * + our over-estimate crosses a page boundary (our estimate is for latest
@@ -360,6 +389,7 @@ privload_tls_init(void *app_tp)
     dr_tcb->dtv = NULL;
     dr_tcb->private = NULL;
 #endif
+/* TODO: riscv64? */
 
     /* We initialize the primary thread's ELF TLS in privload_mod_tls_init()
      * after finalizing the module load (dependent libs not loaded yet here).
@@ -424,7 +454,14 @@ redirect____tls_get_addr()
     /* XXX: assuming ti is passed via r0? */
     asm("str r0, %0" : "=m"((ti)) : : "r0");
     ASSERT_NOT_REACHED();
-#endif /* X86/ARM */
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is just a copy of AARCH64
+     */
+    asm("str x0, %0" : "=m"((ti)) : : "x0");
+    ASSERT_NOT_REACHED();
+#endif /* X86/ARM/RISCV64 */
     LOG(GLOBAL, LOG_LOADER, 4, "__tls_get_addr: module: %d, offset: %d\n", ti->ti_module,
         ti->ti_offset);
     ASSERT(ti->ti_module < tls_info.num_mods);

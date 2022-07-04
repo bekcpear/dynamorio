@@ -83,6 +83,7 @@
 
 #if !defined(DYNAMORIO_ANNOTATIONS_X86) || defined(__clang__)
 /* TODO i#1672: Add annotation support to AArchXX.
+ * TODO: Add annotation support to RISCV64.
  * For now, we provide a fallback so we can build the annotation-concurrency
  * app for use with drcachesim tests.
  * We do the same for clang, which has no "asm goto".

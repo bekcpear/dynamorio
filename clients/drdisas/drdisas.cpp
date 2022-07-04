@@ -65,6 +65,7 @@ droption_t<bool> op_show_bytes(DROPTION_SCOPE_FRONTEND, "show_bytes", true,
 #else
 #    define MAX_INSTR_LENGTH 17
 #endif
+/* TODO: riscv64? */
 
 static bool
 parse_bytes(std::string token, std::vector<byte> &bytes)

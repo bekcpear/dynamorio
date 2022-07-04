@@ -4244,6 +4244,7 @@ fcache_reset_all_caches_proactively(uint target)
     dynamo_resetting = true;
 
     IF_AARCHXX({
+        /* TODO: riscv64? */
         if (INTERNAL_OPTION(steal_reg_at_reset) != 0)
             arch_reset_stolen_reg();
     });

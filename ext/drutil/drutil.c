@@ -167,7 +167,16 @@ static bool
 drutil_insert_get_mem_addr_arm(void *drcontext, instrlist_t *bb, instr_t *where,
                                opnd_t memref, reg_id_t dst, reg_id_t scratch,
                                OUT bool *scratch_used);
-#endif /* X86/ARM */
+#elif defined(RISCV64)
+/*
+ * TODO: riscv64
+ * TODO: this is a copy of AARCHXX
+ */
+static bool
+drutil_insert_get_mem_addr_arm(void *drcontext, instrlist_t *bb, instr_t *where,
+                               opnd_t memref, reg_id_t dst, reg_id_t scratch,
+                               OUT bool *scratch_used);
+#endif /* X86/ARM/RISCV64 */
 
 /* Could be optimized to have scratch==dst for many common cases, but
  * need way to get a 2nd reg for corner cases: simpler to ask caller
@@ -193,6 +202,13 @@ drutil_insert_get_mem_addr_ex(void *drcontext, instrlist_t *bb, instr_t *where,
 #elif defined(AARCHXX)
     return drutil_insert_get_mem_addr_arm(drcontext, bb, where, memref, dst, scratch,
                                           scratch_used);
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCHXX
+     */
+    return drutil_insert_get_mem_addr_arm(drcontext, bb, where, memref, dst, scratch,
+                                          scratch_used);
 #endif
 }
 
@@ -205,6 +221,13 @@ drutil_insert_get_mem_addr(void *drcontext, instrlist_t *bb, instr_t *where,
     return drutil_insert_get_mem_addr_x86(drcontext, bb, where, memref, dst, scratch,
                                           NULL);
 #elif defined(AARCHXX)
+    return drutil_insert_get_mem_addr_arm(drcontext, bb, where, memref, dst, scratch,
+                                          NULL);
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is a copy of AARCHXX
+     */
     return drutil_insert_get_mem_addr_arm(drcontext, bb, where, memref, dst, scratch,
                                           NULL);
 #endif
@@ -510,7 +533,122 @@ drutil_insert_get_mem_addr_arm(void *drcontext, instrlist_t *bb, instr_t *where,
     }
     return true;
 }
-#endif     /* X86/AARCHXX */
+#elif defined(RISCV64)
+/*
+ * TODO: riscv64
+ * TODO: this is a copy of RISCV64
+ */
+
+static reg_id_t
+replace_stolen_reg(void *drcontext, instrlist_t *bb, instr_t *where, opnd_t memref,
+                   reg_id_t dst, reg_id_t scratch, OUT bool *scratch_used)
+{
+    reg_id_t reg;
+    reg = opnd_uses_reg(memref, dst) ? scratch : dst;
+    if (scratch_used != NULL && reg == scratch)
+        *scratch_used = true;
+    DR_ASSERT(!opnd_uses_reg(memref, reg));
+    dr_insert_get_stolen_reg_value(drcontext, bb, where, reg);
+    return reg;
+}
+
+static bool
+drutil_insert_get_mem_addr_arm(void *drcontext, instrlist_t *bb, instr_t *where,
+                               opnd_t memref, reg_id_t dst, reg_id_t scratch,
+                               OUT bool *scratch_used)
+{
+    if (!opnd_is_base_disp(memref) IF_AARCH64(&&!opnd_is_rel_addr(memref)))
+        return false;
+    if (opnd_is_rel_addr(memref)) {
+        instrlist_insert_mov_immed_ptrsz(drcontext, (ptr_int_t)opnd_get_addr(memref),
+                                         opnd_create_reg(dst), bb, where, NULL, NULL);
+        return true;
+    }
+    else {
+        instr_t *instr;
+        reg_id_t base = opnd_get_base(memref);
+        reg_id_t index = opnd_get_index(memref);
+        bool negated = TEST(DR_OPND_NEGATED, opnd_get_flags(memref));
+        int disp = opnd_get_disp(memref);
+        reg_id_t stolen = dr_get_stolen_reg();
+        /* On ARM, disp is never negative; on AArch64, we do not use DR_OPND_NEGATED. */
+        ASSERT(IF_ARM_ELSE(disp >= 0, !negated), "DR_OPND_NEGATED internal error");
+        if (disp < 0) {
+            disp = -disp;
+            negated = !negated;
+        }
+        /* In cases where only the lower 32 bits of the index register are
+         * used, we need to widen to 64 bits in order to handle stolen
+         * register's replacement. See replace_stolen_reg() below, where index
+         * is narrowed after replacement.
+         */
+        bool is_index_32bit_stolen = false;
+        if (index == reg_64_to_32(stolen)) {
+            index = stolen;
+            is_index_32bit_stolen = true;
+        }
+        if (dst == stolen || scratch == stolen)
+            return false;
+        if (base == stolen) {
+            base = replace_stolen_reg(drcontext, bb, where, memref, dst, scratch,
+                                      scratch_used);
+        } else if (index == stolen) {
+            index = replace_stolen_reg(drcontext, bb, where, memref, dst, scratch,
+                                       scratch_used);
+            /* Narrow replaced index register if it was 32 bit stolen register
+             * before replace_stolen_reg() call.
+             */
+            if (is_index_32bit_stolen)
+                index = reg_64_to_32(stolen);
+        }
+        if (index == REG_NULL && opnd_get_disp(memref) != 0) {
+            /* first try "add dst, base, #disp" */
+            instr = negated
+                ? INSTR_CREATE_sub(drcontext, opnd_create_reg(dst), opnd_create_reg(base),
+                                   OPND_CREATE_INT(disp))
+                : XINST_CREATE_add_2src(drcontext, opnd_create_reg(dst),
+                                        opnd_create_reg(base), OPND_CREATE_INT(disp));
+#    define MAX_ADD_IMM_DISP (1 << 12)
+            if (IF_ARM_ELSE(instr_is_encoding_possible(instr), disp < MAX_ADD_IMM_DISP)) {
+                PRE(bb, where, instr);
+                return true;
+            }
+            instr_destroy(drcontext, instr);
+            /* The memref may have a disp that cannot be directly encoded into an
+             * add_imm instr, so we use movw to put disp into the scratch instead
+             * and fake it as an index reg to insert an add instr later.
+             */
+            /* if dst is used in memref, we use scratch instead */
+            index = (base == dst) ? scratch : dst;
+            if (scratch_used != NULL && index == scratch)
+                *scratch_used = true;
+            PRE(bb, where,
+                XINST_CREATE_load_int(drcontext, opnd_create_reg(index),
+                                      OPND_CREATE_INT(disp)));
+            /* "add" instr is inserted below with a fake index reg added here */
+        }
+        if (index != REG_NULL) {
+            uint amount;
+            dr_extend_type_t extend = opnd_get_index_extend(memref, NULL, &amount);
+            instr = negated
+                ? INSTR_CREATE_sub_extend(drcontext, opnd_create_reg(dst),
+                                          opnd_create_reg(base), opnd_create_reg(index),
+                                          OPND_CREATE_INT(extend),
+                                          OPND_CREATE_INT(amount))
+                : INSTR_CREATE_add_extend(drcontext, opnd_create_reg(dst),
+                                          opnd_create_reg(base), opnd_create_reg(index),
+                                          OPND_CREATE_INT(extend),
+                                          OPND_CREATE_INT(amount));
+            PRE(bb, where, instr);
+        } else if (base != dst) {
+            PRE(bb, where,
+                XINST_CREATE_move(drcontext, opnd_create_reg(dst),
+                                  opnd_create_reg(base)));
+        }
+    }
+    return true;
+}
+#endif     /* X86/AARCHXX/RISCV64 */
 
 DR_EXPORT
 uint

@@ -254,6 +254,7 @@ private:
         return TESTANY(kIsAarch64DcZvaMask, packed_);
     }
 #endif
+/* TODO: riscv64? */
     bool
     is_cti() const
     {
@@ -1498,6 +1499,7 @@ private:
             buf->type = TRACE_TYPE_WRITE;
         }
 #endif
+/* TODO: riscv64? */
 
         *buf_in = ++buf;
         return "";

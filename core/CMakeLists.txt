@@ -80,6 +80,8 @@ if (AARCH64)
     ${aarch64_exported_opcodes} VERBATIM)
 endif ()
 
+# TODO: riscv64?
+
 set(asm_deps
   "${PROJECT_SOURCE_DIR}/core/arch/asm_defines.asm"
   "${PROJECT_BINARY_DIR}/configure.h")
@@ -144,6 +146,7 @@ add_gen_events_deps(drlibc)
 if (AARCH64)
   add_dependencies(drlibc gen_aarch64_codec)
 endif (AARCH64)
+# TODO: riscv64?
 if (WIN32 AND "${CMAKE_GENERATOR}" MATCHES "Visual Studio")
   # for parallel build correctness we need a target dependence
   add_dependencies(drlibc ${drlibc_xarch_asm_tgt} ${drlibc_arch_asm_tgt})
@@ -502,6 +505,7 @@ function (configure_core_lib target)
   if (AARCH64)
     add_dependencies(${target} gen_aarch64_codec)
   endif()
+  # TODO: riscv64
   if (WIN32)
     # Since we're forced to use link-line flags instead of target_link_libraries
     # for dynamorio, we have to add a real target dependence here for correct
@@ -897,6 +901,7 @@ add_gen_events_deps(${PRELOAD_NAME})
 if (AARCH64)
   add_dependencies(${PRELOAD_NAME} gen_aarch64_codec)
 endif()
+# TODO: riscv64
 
 if ("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
   add_dependencies(${PRELOAD_NAME} ${preinject_asm_tgt})
@@ -973,6 +978,7 @@ add_gen_events_deps(drdecode)
 if (AARCH64)
   add_dependencies(drdecode gen_aarch64_codec)
 endif()
+# TODO: riscv64
 target_link_libraries(drdecode drlibc)
 
 ###########################################################################
@@ -1127,6 +1133,7 @@ if (BUILD_TESTS AND
   if (AARCHXX)
     set_tests_properties(unit_tests PROPERTIES LABELS RUNS_ON_QEMU)
   endif ()
+  # TODO: riscv64?
   copy_target_to_device(unit_tests "${location_suffix}")
 endif ()
 
@@ -1176,6 +1183,8 @@ DR_export_header(${CMAKE_CURRENT_SOURCE_DIR}/ir/x86/instr_create_api.h dr_ir_mac
 DR_export_header(${CMAKE_CURRENT_SOURCE_DIR}/ir/arm/instr_create_api.h dr_ir_macros_arm.h)
 DR_export_header(${CMAKE_CURRENT_SOURCE_DIR}/ir/aarch64/instr_create_api.h
   dr_ir_macros_aarch64.h)
+DR_export_header(${CMAKE_CURRENT_SOURCE_DIR}/ir/riscv64/instr_create_api.h
+  dr_ir_macros_riscv64.h)
 DR_export_header(${CMAKE_CURRENT_SOURCE_DIR}/lib/dr_ir_utils.h dr_ir_utils.h)
 DR_export_header(${CMAKE_CURRENT_SOURCE_DIR}/lib/dr_tools.h dr_tools.h)
 DR_export_header(${CMAKE_CURRENT_SOURCE_DIR}/annotations_api.h dr_annotation.h)

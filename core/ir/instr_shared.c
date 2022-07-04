@@ -94,6 +94,7 @@ instr_create(void *drcontext)
 #elif defined(ARM)
     instr_set_isa_mode(instr, dr_get_isa_mode(dcontext));
 #endif
+/* TODO: riscv64? */
     return instr;
 }
 
@@ -3556,6 +3557,7 @@ instr_create_jump_via_dcontext(dcontext_t *dcontext, int offs)
     opnd_t memopnd = opnd_create_dcontext_field(dcontext, offs);
     return XINST_CREATE_jump_mem(dcontext, memopnd);
 #    endif
+     /* TODO: riscv64? */
 }
 
 /* there is no corresponding save routine since we no longer support
@@ -3603,7 +3605,11 @@ instr_raw_is_tls_spill(byte *pc, reg_id_t reg, ushort offs)
     /* FIXME i#1551, i#1569: NYI on ARM/AArch64 */
     ASSERT_NOT_IMPLEMENTED(false);
     return false;
-#    endif /* X86/ARM */
+#    elif defined(RISCV64)
+    /* TODO: riscv64 */
+    ASSERT_NOT_IMPLEMENTED(false);
+    return false;
+#    endif /* X86/ARM/RISCV64 */
 }
 
 /* this routine may upgrade a level 1 instr */
@@ -3638,6 +3644,13 @@ instr_check_tls_spill_restore(instr_t *instr, bool *spill, reg_id_t *reg, int *o
         opnd_is_far_base_disp(memop) && opnd_get_segment(memop) == SEG_TLS &&
         opnd_is_abs_base_disp(memop)
 #    elif defined(AARCHXX)
+        opnd_is_base_disp(memop) && opnd_get_base(memop) == dr_reg_stolen &&
+        opnd_get_index(memop) == DR_REG_NULL
+#    elif defined(RISCV64)
+        /*
+         * TODO: riscv64
+         * TODO: this is a copy of AARCHXX
+         */
         opnd_is_base_disp(memop) && opnd_get_base(memop) == dr_reg_stolen &&
         opnd_get_index(memop) == DR_REG_NULL
 #    endif
@@ -3693,6 +3706,10 @@ instr_is_tls_xcx_spill(instr_t *instr)
         return instr_is_tls_spill(instr, REG_ECX, MANGLE_XCX_SPILL_SLOT);
 #    elif defined(AARCHXX)
     /* FIXME i#1551, i#1569: NYI on ARM/AArch64 */
+    ASSERT_NOT_IMPLEMENTED(false);
+    return false;
+#    elif defined(RISCV64)
+    /* TODO: riscv64 */
     ASSERT_NOT_IMPLEMENTED(false);
     return false;
 #    endif
@@ -3770,6 +3787,7 @@ instr_is_reg_spill_or_restore_ex(void *drcontext, instr_t *instr, bool DR_only, 
               || check_disp == os_tls_offset((ushort)TLS_REG4_SLOT) ||
               check_disp == os_tls_offset((ushort)TLS_REG5_SLOT)
 #    endif
+     /* TODO: riscv64? */
                   ))) {
             if (tls != NULL)
                 *tls = true;
@@ -3883,7 +3901,11 @@ move_mm_reg_opcode(bool aligned16, bool aligned32)
 #    elif defined(AARCH64)
     ASSERT_NOT_IMPLEMENTED(false); /* FIXME i#1569 */
     return 0;
-#    endif /* X86/ARM */
+#    elif defined(RISCV64)
+    /* TODO: riscv64 */
+    ASSERT_NOT_IMPLEMENTED(false);
+    return 0;
+#    endif /* X86/ARM/RISCV64 */
 }
 
 uint

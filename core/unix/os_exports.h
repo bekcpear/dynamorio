@@ -173,6 +173,8 @@ extern uint android_tls_base_offs;
 #    define USR_TLS_COPROC_15 15
 #endif
 
+/* TODO: riscv64? */
+
 #ifdef LINUX
 #    include "include/clone3.h"
 #endif
@@ -510,6 +512,8 @@ set_thread_register_from_clone_record(void *record);
 void
 set_app_lib_tls_base_from_clone_record(dcontext_t *dcontext, void *record);
 #endif
+
+/* TODO: riscv64? */
 
 void
 restore_clone_param_from_clone_record(dcontext_t *dcontext, void *record);

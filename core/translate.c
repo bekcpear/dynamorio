@@ -125,6 +125,9 @@ instr_is_inline_syscall_jmp(dcontext_t *dcontext, instr_t *inst)
             opnd_is_instr(instr_get_target(inst)));
 #    elif defined(AARCH64)
     return (instr_get_opcode(inst) == OP_b && opnd_is_instr(instr_get_target(inst)));
+#    elif defined(RISCV64)
+    /* TODO: riscv64 */
+    return (instr_get_opcode(inst) == OP_b && opnd_is_instr(instr_get_target(inst)));
 #    elif defined(ARM)
     return ((instr_get_opcode(inst) == OP_b_short ||
              /* A32 uses a regular jump */
@@ -208,6 +211,7 @@ instr_is_rseq_mangling(dcontext_t *dcontext, instr_t *inst)
         opnd_get_disp(instr_get_dst(inst, 0)) == rseq_get_tls_ptr_offset())
         return true;
 #        endif
+    /* TODO: riscv64? */
 #    endif
     return false;
 }
@@ -301,6 +305,7 @@ translate_walk_track_pre_instr(dcontext_t *tdcontext, instr_t *inst,
         walk->xsp_adjust = 0;
         for (reg_id_t r = 0; r < REG_SPILL_NUM; r++) {
 #ifndef AARCHXX
+            /* TODO: riscv64? */
             /* we should have seen a restore for every spill, unless at
              * fragment-ending jump to ibl, which shouldn't come here
              */
@@ -475,6 +480,8 @@ translate_walk_track_post_instr(dcontext_t *tdcontext, instr_t *inst,
             /* do nothing */
             LOG(THREAD_GET, LOG_INTERP, 4, "%s: stolen reg move\n", __FUNCTION__);
         }
+
+        /* TODO: riscv64? */
 #endif
         /* PR 267260: Track our own mangle-inserted pushes and pops, for
          * restoring state on an app fault in the middle of our indirect
@@ -533,6 +540,8 @@ translate_walk_track_post_instr(dcontext_t *tdcontext, instr_t *inst,
         else if (instr_is_ldstex_mangling(tdcontext, inst)) {
             /* nothing to do */
         }
+
+        /* TODO: riscv64? */
 #endif
         /* Single step mangling adds a nop. */
         else if (instr_is_nop(inst)) {
@@ -1184,6 +1193,7 @@ restore_stolen_register(dcontext_t *dcontext, priv_mcontext_t *mcontext)
         dcontext->local_state->spill_space.reg_stolen);
     set_stolen_reg_val(mcontext, dcontext->local_state->spill_space.reg_stolen);
 #endif
+    /* TODO: riscv64? */
 }
 
 /* The esp in mcontext must either be valid or NULL (if null will be unable to

@@ -124,7 +124,12 @@ typedef struct _our_modify_ldt_t {
 #    define WRITE_DR_SEG(val) ASSERT_NOT_REACHED()
 #    define WRITE_LIB_SEG(val) ASSERT_NOT_REACHED()
 #    define TLS_SLOT_VAL_EXITED ((byte *)PTR_UINT_MINUS_1)
-#endif /* X86/ARM */
+#elif defined(RISCV64)
+     /* TODO: riscv64 */
+#    define WRITE_DR_SEG(val) ASSERT_NOT_REACHED()
+#    define WRITE_LIB_SEG(val) ASSERT_NOT_REACHED()
+#    define TLS_SLOT_VAL_EXITED ((byte *)PTR_UINT_MINUS_1)
+#endif /* X86/ARM/RISCV64 */
 
 static inline ptr_uint_t
 read_thread_register(reg_id_t reg)
@@ -184,6 +189,34 @@ read_thread_register(reg_id_t reg)
         ASSERT_NOT_REACHED();
         return 0;
     }
+#elif defined(RISCV64)
+    /*
+     * TODO: riscv64
+     * TODO: this is just a copy of AARCHXX
+     */
+    ptr_uint_t sel;
+    if (reg == DR_REG_TPIDRURO) {
+        IF_X64_ELSE({ asm volatile("mrs %0, tpidrro_el0"
+                                   : "=r"(sel)); },
+                    {
+                        /* read thread register from CP15 (coprocessor 15)
+                         * c13 (software thread ID registers) with opcode 3 (user RO)
+                         */
+                        asm volatile("mrc  p15, 0, %0, c13, c0, 3" : "=r"(sel));
+                    });
+    } else if (reg == DR_REG_TPIDRURW) {
+        IF_X64_ELSE({ asm volatile("mrs %0, tpidr_el0"
+                                   : "=r"(sel)); },
+                    {
+                        /* read thread register from CP15 (coprocessor 15)
+                         * c13 (software thread ID registers) with opcode 2 (user RW)
+                         */
+                        asm volatile("mrc  p15, 0, %0, c13, c0, 2" : "=r"(sel));
+                    });
+    } else {
+        ASSERT_NOT_REACHED();
+        return 0;
+    }
 #else
     ASSERT_NOT_IMPLEMENTED(false);
 #endif
@@ -205,6 +238,7 @@ write_thread_register(void *val)
 #    endif
 }
 #endif
+/* TODO: riscv64? */
 
 #if defined(LINUX) && defined(X86) && defined(X64) && !defined(ARCH_SET_GS)
 #    define ARCH_SET_GS 0x1001

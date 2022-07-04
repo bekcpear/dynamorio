@@ -641,6 +641,7 @@ OPTION_DEFAULT_INTERNAL(bool, ldstex2cas, true,
                         "replace exclusive load/store with compare-and-swap to "
                         "allow instrumentation, at the risk of ABA errors")
 #endif
+/* TODO: riscv64? */
 
 #ifdef WINDOWS_PC_SAMPLE
 OPTION_DEFAULT(uint, prof_pcs_DR, 2,

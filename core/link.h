@@ -495,6 +495,10 @@ get_selfmod_linkstub(void);
 /* On AArch64 we need to refer to linkstub_selfmod from aarch64.asm. */
 extern const linkstub_t linkstub_selfmod;
 #endif
+/*
+ * TODO: riscv64?
+ * TODO: linkstub_selfmod?
+ */
 const linkstub_t *
 get_ibl_deleted_linkstub(void);
 /* This is used for Windows APC, callback, etc. and Linux sigreturn, forge fault, etc. */

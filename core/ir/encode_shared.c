@@ -89,6 +89,7 @@ instr_is_encoding_possible(instr_t *instr)
     return (info != NULL);
 }
 #endif
+/* TODO: riscv64? */
 
 /* looks at all possible instr_info_t templates, returns first match
  * returns NULL if no encoding is possible

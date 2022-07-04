@@ -1696,6 +1696,7 @@ translate_from_synchall_to_dispatch(thread_record_t *tr, thread_synch_state_t sy
         }
 #endif
         IF_AARCHXX({
+            /* TODO: riscv64? */
             if (INTERNAL_OPTION(steal_reg_at_reset) != 0) {
                 /* We don't want to translate, just update the stolen reg values */
                 arch_mcontext_reset_stolen_reg(dcontext, mc);
@@ -1730,6 +1731,8 @@ translate_from_synchall_to_dispatch(thread_record_t *tr, thread_synch_state_t sy
                 arch_mcontext_reset_stolen_reg(dcontext, mc);
             }
         });
+        /* TODO: riscv64? */
+
         /* We send all threads, regardless of whether was in DR or not, to
          * re-interp from translated cxt, to avoid having to handle stale
          * local state problems if we simply resumed.
@@ -1808,6 +1811,7 @@ translate_from_synchall_to_dispatch(thread_record_t *tr, thread_synch_state_t sy
             dcontext->local_state->spill_space.reg_stolen = get_stolen_reg_val(mc);
             set_stolen_reg_val(mc, (reg_t)os_get_dr_tls_base(dcontext));
         });
+        /* TODO: riscv64? */
 #ifdef WINDOWS
         /* i#25: we could have interrupted thread in DR, where has priv fls data
          * in TEB, and fcache_return blindly copies into app fls: so swap to app
