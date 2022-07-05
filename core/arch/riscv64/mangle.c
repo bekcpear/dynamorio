@@ -49,7 +49,7 @@
  * Thus we use instr_create_{save_to,restore_from}_tls() directly.
  */
 
-#ifdef AARCH64
+#ifdef RISCV64
 /* Defined in aarch64.asm. */
 void
 icache_op_ic_ivau_asm(void);
@@ -85,7 +85,7 @@ icache_op_struct_t icache_op_struct;
 void
 mangle_arch_init(void)
 {
-#ifdef AARCH64
+#ifdef RISCV64
     /* Check address of "lock" is unaligned. See comment in icache_op_struct_t. */
     ASSERT(!ALIGNED(&icache_op_struct.lock, 16));
 #endif
@@ -100,7 +100,7 @@ insert_clear_eflags(dcontext_t *dcontext, clean_call_info_t *cci, instrlist_t *i
      */
 }
 
-#ifdef AARCH64
+#ifdef RISCV64
 /* Maximum positive immediate offset for STP/LDP with 64 bit registers. */
 #    define MAX_STP_OFFSET 504
 
@@ -280,10 +280,10 @@ insert_push_all_registers(dcontext_t *dcontext, clean_call_info_t *cci,
                           instrlist_t *ilist, instr_t *instr, uint alignment,
                           opnd_t push_pc,
                           reg_id_t scratch /*optional*/
-                              _IF_AARCH64(bool out_of_line))
+                              _IF_RISCV64(bool out_of_line))
 {
     uint dstack_offs = 0;
-#ifdef AARCH64
+#ifdef RISCV64
     uint max_offs;
 #endif
     if (cci == NULL)
@@ -295,7 +295,7 @@ insert_push_all_registers(dcontext_t *dcontext, clean_call_info_t *cci,
          */
     }
     /* FIXME i#1551: once we have cci->num_simd_skip, skip this if possible */
-#ifdef AARCH64
+#ifdef RISCV64
     /* X0 is used to hold the stack pointer. */
     cci->reg_skip[DR_REG_X0 - DR_REG_START_GPR] = false;
     /* X1 and X2 are used to save and restore the status and control registers. */
@@ -509,11 +509,11 @@ insert_push_all_registers(dcontext_t *dcontext, clean_call_info_t *cci,
  */
 void
 insert_pop_all_registers(dcontext_t *dcontext, clean_call_info_t *cci, instrlist_t *ilist,
-                         instr_t *instr, uint alignment _IF_AARCH64(bool out_of_line))
+                         instr_t *instr, uint alignment _IF_RISCV64(bool out_of_line))
 {
     if (cci == NULL)
         cci = &default_clean_call_info;
-#ifdef AARCH64
+#ifdef RISCV64
     uint current_offs;
     /* mov x0, sp */
     PRE(ilist, instr,
@@ -636,13 +636,13 @@ insert_pop_all_registers(dcontext_t *dcontext, clean_call_info_t *cci, instrlist
 #endif
 }
 
-#ifndef AARCH64
+#ifndef RISCV64
 reg_id_t
 shrink_reg_for_param(reg_id_t regular, opnd_t arg)
 {
     return regular;
 }
-#endif /* !AARCH64 */
+#endif /* !RISCV64 */
 
 /* Return true if opnd is a register, but not XSP, or immediate zero on AArch64. */
 static bool
@@ -686,7 +686,7 @@ insert_parameter_preparation(dcontext_t *dcontext, instrlist_t *ilist, instr_t *
         uint n = num_args - NUM_REGPARM;
         /* On both ARM and AArch64 the stack pointer is kept (2 * XSP_SZ)-aligned. */
         stack_inc = ALIGN_FORWARD(n, 2) * XSP_SZ;
-#ifdef AARCH64
+#ifdef RISCV64
         for (i = 0; i < n; i += 2) {
             opnd_t *arg0 = &args[NUM_REGPARM + i];
             opnd_t *arg1 = i + 1 < n ? &args[NUM_REGPARM + i + 1] : NULL;
@@ -910,7 +910,7 @@ int
 insert_out_of_line_context_switch(dcontext_t *dcontext, instrlist_t *ilist,
                                   instr_t *instr, bool save, byte *encode_pc)
 {
-#ifdef AARCH64
+#ifdef RISCV64
     if (save) {
         /* Reserve stack space to push the context. We do it here instead of
          * in insert_push_all_registers, so we can save the original value
@@ -975,7 +975,7 @@ static void
 mangle_stolen_reg(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
                   instr_t *next_instr, bool instr_to_be_removed);
 
-#ifndef AARCH64
+#ifndef RISCV64
 
 /* i#1662 optimization: we try to pick the same scratch register during
  * mangling to provide more opportunities for optimization,
@@ -1009,14 +1009,14 @@ find_prior_scratch_reg_restore(dcontext_t *dcontext, instr_t *instr, reg_id_t *p
     return NULL;
 }
 
-#endif /* !AARCH64 */
+#endif /* !RISCV64 */
 
 /* optimized spill: only if not immediately spilled already */
 static void
 insert_save_to_tls_if_necessary(dcontext_t *dcontext, instrlist_t *ilist, instr_t *where,
                                 reg_id_t reg, ushort slot)
 {
-#ifdef AARCH64
+#ifdef RISCV64
     /* FIXME i#1569: not yet optimized */
     PRE(ilist, where, instr_create_save_to_tls(dcontext, reg, slot));
 #else
@@ -1043,7 +1043,7 @@ insert_save_to_tls_if_necessary(dcontext_t *dcontext, instrlist_t *ilist, instr_
 #endif
 }
 
-#ifndef AARCH64
+#ifndef RISCV64
 
 /* If instr is inside an IT block, removes it from the block and
  * leaves it as an isolated (un-encodable) predicated instr, with any
@@ -1199,14 +1199,14 @@ mangle_reinstate_it_blocks(dcontext_t *dcontext, instrlist_t *ilist, instr_t *st
     });
 }
 
-#endif /* !AARCH64 */
+#endif /* !RISCV64 */
 
 /* This is *not* a hot-patchable patch: i.e., it is subject to races. */
 void
 patch_mov_immed_arch(dcontext_t *dcontext, ptr_int_t val, byte *pc, instr_t *first,
                      instr_t *last)
 {
-#ifdef AARCH64
+#ifdef RISCV64
     uint *write_pc = (uint *)vmcode_get_writable_addr(pc);
     ASSERT(first != NULL && last != NULL);
     /* We expect OP_movz followed by up to 3 OP_movk. */
@@ -1302,7 +1302,7 @@ mangle_interrupt(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
     ASSERT_NOT_IMPLEMENTED(false); /* FIXME i#1551, i#1569 */
 }
 
-#ifndef AARCH64
+#ifndef RISCV64
 
 /* Adds a mov of the fall-through address into IBL_TARGET_REG, predicated
  * with the inverse of instr's predicate.
@@ -1358,13 +1358,13 @@ app_instr_is_in_it_block(dcontext_t *dcontext, instr_t *instr)
     return (instr_get_isa_mode(instr) == DR_ISA_ARM_THUMB && instr_is_predicated(instr));
 }
 
-#endif /* !AARCH64 */
+#endif /* !RISCV64 */
 
 instr_t *
 mangle_direct_call(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
                    instr_t *next_instr, bool mangle_calls, uint flags)
 {
-#ifdef AARCH64
+#ifdef RISCV64
     ptr_int_t target, retaddr;
 
     ASSERT(instr_get_opcode(instr) == OP_bl);
@@ -1446,7 +1446,7 @@ instr_t *
 mangle_indirect_call(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
                      instr_t *next_instr, bool mangle_calls, uint flags)
 {
-#ifdef AARCH64
+#ifdef RISCV64
     ASSERT(instr_get_opcode(instr) == OP_blr);
     PRE(ilist, instr,
         instr_create_save_to_tls(dcontext, IBL_TARGET_REG, IBL_TARGET_SLOT));
@@ -1521,7 +1521,7 @@ instr_t *
 mangle_indirect_jump(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
                      instr_t *next_instr, uint flags)
 {
-#ifdef AARCH64
+#ifdef RISCV64
     ASSERT(instr_get_opcode(instr) == OP_br || instr_get_opcode(instr) == OP_ret);
     PRE(ilist, instr,
         instr_create_save_to_tls(dcontext, IBL_TARGET_REG, IBL_TARGET_SLOT));
@@ -1750,7 +1750,7 @@ pick_scratch_reg(dcontext_t *dcontext, instr_t *instr, reg_id_t do_not_pick_a,
     if (should_restore != NULL)
         *should_restore = true;
 
-#ifndef AARCH64 /* FIXME i#1569: not yet optimized */
+#ifndef RISCV64 /* FIXME i#1569: not yet optimized */
     if (find_prior_scratch_reg_restore(dcontext, instr, &reg) != NULL &&
         reg != REG_NULL && !instr_uses_reg(instr, reg) &&
         !reg_overlap(reg, do_not_pick_a) && !reg_overlap(reg, do_not_pick_b) &&
@@ -1837,7 +1837,7 @@ instr_t *
 mangle_rel_addr(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
                 instr_t *next_instr)
 {
-#ifdef AARCH64
+#ifdef RISCV64
     uint opc = instr_get_opcode(instr);
     opnd_t dst = instr_get_dst(instr, 0);
     opnd_t src = instr_get_src(instr, 0);
@@ -1960,7 +1960,7 @@ mangle_rel_addr(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
 #endif
 }
 
-#ifndef AARCH64
+#ifndef RISCV64
 
 /* mangle simple pc read, pc read in gpr_list is handled in mangle_gpr_list_read */
 static void
@@ -1997,7 +1997,7 @@ mangle_pc_read(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
         PRE(ilist, next_instr, instr_create_restore_from_tls(dcontext, reg, slot));
 }
 
-#endif /* !AARCH64 */
+#endif /* !RISCV64 */
 
 /* save tls_base from dr_reg_stolen to reg and load app value to dr_reg_stolen */
 static void
@@ -2077,7 +2077,7 @@ mangle_stolen_reg(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
      */
     ASSERT(!instr_is_meta(instr) && instr_uses_reg(instr, dr_reg_stolen));
 
-#ifndef AARCH64 /* FIXME i#1569: recognise "move" on AArch64 */
+#ifndef RISCV64 /* FIXME i#1569: recognise "move" on AArch64 */
     /* optimization, convert simple mov to ldr/str:
      * - "mov r0  -> r10"  ==> "str r0 -> [r10_slot]"
      * - "mov r10 -> r0"   ==> "ldr [r10_slot] -> r0"
@@ -2131,7 +2131,7 @@ instr_t *
 mangle_reads_thread_register(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
                              instr_t *next_instr)
 {
-#ifdef AARCH64
+#ifdef RISCV64
     reg_id_t reg = opnd_get_reg(instr_get_dst(instr, 0));
     ASSERT(instr->opcode == OP_mrs);
     if (reg != dr_reg_stolen) {
@@ -2197,7 +2197,7 @@ mangle_reads_thread_register(dcontext_t *dcontext, instrlist_t *ilist, instr_t *
 #endif
 }
 
-#ifdef AARCH64
+#ifdef RISCV64
 instr_t *
 mangle_writes_thread_register(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
                               instr_t *next_instr)
@@ -2224,7 +2224,7 @@ mangle_writes_thread_register(dcontext_t *dcontext, instrlist_t *ilist, instr_t 
 }
 #endif
 
-#ifndef AARCH64
+#ifndef RISCV64
 
 static void
 store_reg_to_memlist(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
@@ -2743,9 +2743,9 @@ mangle_gpr_list_write(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
     return next_instr;
 }
 
-#endif /* !AARCH64 */
+#endif /* !RISCV64 */
 
-#ifdef AARCH64
+#ifdef RISCV64
 /* We mangle a conditional branch that uses the stolen register like this:
  *
  *     cbz   x28, target     # x28 is stolen register
@@ -2804,7 +2804,7 @@ mangle_cbr_stolen_reg(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
     PRE(ilist, next_instr, fall);
     PRE(ilist, next_instr, instr_create_restore_from_tls(dcontext, reg, slot));
 }
-#endif /* AARCH64 */
+#endif /* RISCV64 */
 
 /* On ARM, we need mangle app instr accessing registers pc and dr_reg_stolen.
  * We use this centralized mangling routine here to handle complex issues with
@@ -2814,7 +2814,7 @@ instr_t *
 mangle_special_registers(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
                          instr_t *next_instr)
 {
-#ifdef AARCH64
+#ifdef RISCV64
     if (!instr_uses_reg(instr, dr_reg_stolen))
         return next_instr;
     if (instr_is_cbr(instr))
@@ -2878,7 +2878,7 @@ float_pc_update(dcontext_t *dcontext)
     ASSERT_NOT_REACHED();
 }
 
-#ifdef AARCH64
+#ifdef RISCV64
 instr_t *
 mangle_icache_op(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
                  instr_t *next_instr, app_pc pc)
@@ -2984,7 +2984,7 @@ create_ld_from_ldex(dcontext_t *dcontext, instr_t *ldex)
     opnd_t memop = instr_get_src(ldex, 0);
     /* TODO i#1698: Preserve ARM predication and add tests. */
     switch (instr_get_opcode(ldex)) {
-#ifdef AARCH64
+#ifdef RISCV64
     case OP_ldaxp:
         /* There is no OP_ldap so we engage the monitor.  Should we add CLREX? */
         return INSTR_CREATE_ldaxp(dcontext, regop, instr_get_dst(ldex, 1), memop);
@@ -3055,7 +3055,7 @@ create_ldax_from_stex(dcontext_t *dcontext, instr_t *strex, reg_id_t *dest_reg I
     opnd_t regop = opnd_create_reg(*dest_reg);
     /* TODO i#1698: Preserve ARM predication and add tests. */
     switch (instr_get_opcode(strex)) {
-#ifdef AARCH64
+#ifdef RISCV64
     case OP_stlxp:
     case OP_stxp:
         /* We treat A64 pair-4byte as single-8byte to handle ldxr;stxp. */
@@ -3316,7 +3316,7 @@ mangle_exclusive_load(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
     ushort xzr_slot = 0, xzr2_slot = 0;
     bool xzr_restore = false, xzr2_restore = false;
     reg_id_t xzr_repl = DR_REG_NULL, xzr2_repl = DR_REG_NULL;
-#ifdef AARCH64
+#ifdef RISCV64
     /* If the ldex loads into the zero register, we need to instead get the real
      * value so our compare at the stex will succeed (otherwise we will loop
      * forever: i#5245).  For same-block we statically skip the compare.
@@ -3370,7 +3370,7 @@ mangle_exclusive_load(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
             insert_save_to_tls_if_necessary(dcontext, ilist, where, scratch, slot);
         /* Write the address and value to TLS. */
         /* Pair store requires consecutive register numbers for 32-bit. */
-        bool use_pair = IF_AARCH64_ELSE(base_reg != DR_REG_SP, false);
+        bool use_pair = IF_RISCV64_ELSE(base_reg != DR_REG_SP, false);
         if (use_pair) {
             PRE(ilist, where,
                 XINST_CREATE_store_pair(
@@ -3381,7 +3381,7 @@ mangle_exclusive_load(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
                     opnd_create_reg(base_reg), opnd_create_reg(value_reg)));
         } else {
             /* A64 won't let you use sp as a GPR.  Grrr. */
-            if (IF_AARCH64_ELSE(base_reg == DR_REG_SP, false)) {
+            if (IF_RISCV64_ELSE(base_reg == DR_REG_SP, false)) {
                 PRE(ilist, where,
                     XINST_CREATE_move(dcontext, opnd_create_reg(scratch),
                                       opnd_create_reg(base_reg)));
@@ -3404,7 +3404,7 @@ mangle_exclusive_load(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
             /* For 32-bit, pair store requires consecutive register numbers.
              * XXX: We could store the 2 values at once.
              */
-            if (IF_AARCH64_ELSE(opnd_get_size(instr_get_dst(instr, 0)) == OPSZ_PTR,
+            if (IF_RISCV64_ELSE(opnd_get_size(instr_get_dst(instr, 0)) == OPSZ_PTR,
                                 false)) {
                 PRE(ilist, where,
                     XINST_CREATE_store_pair(
@@ -3417,7 +3417,7 @@ mangle_exclusive_load(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
                 /* For A64, we have to treat a pair of 4-bytes as one 8-byte b/c the
                  * strex could be a singleton.
                  */
-                if (IF_AARCH64_ELSE(opnd_get_size(instr_get_dst(instr, 0)) == OPSZ_4,
+                if (IF_RISCV64_ELSE(opnd_get_size(instr_get_dst(instr, 0)) == OPSZ_4,
                                     false)) {
                     PRE(ilist, where,
                         XINST_CREATE_store(
@@ -3681,19 +3681,19 @@ mangle_exclusive_store(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
         /* If the 2nd matches the store results, we have to compare it first, since
          * op_res will clobber the value.
          */
-        compare_second_first IF_AARCH64(
+        compare_second_first IF_RISCV64(
             &&(!ldex_in_same_block || reg_orig_ld_val2 != DR_REG_XZR))) {
         insert_compare_and_jump_not_equal(dcontext, ilist, instr, op_res,
                                           opnd_create_reg(reg_new_ld_val2),
                                           opnd_create_reg(reg_orig_ld_val2), no_match);
     }
-    if (IF_AARCH64_ELSE(!ldex_in_same_block || reg_orig_ld_val != DR_REG_XZR, true)) {
+    if (IF_RISCV64_ELSE(!ldex_in_same_block || reg_orig_ld_val != DR_REG_XZR, true)) {
         insert_compare_and_jump_not_equal(dcontext, ilist, instr, op_res,
                                           opnd_create_reg(reg_new_ld_val),
                                           opnd_create_reg(reg_orig_ld_val), no_match);
     }
     if (is_pair &&
-        !compare_second_first IF_AARCH64(
+        !compare_second_first IF_RISCV64(
             &&(!ldex_in_same_block || reg_orig_ld_val2 != DR_REG_XZR))) {
         insert_compare_and_jump_not_equal(dcontext, ilist, instr, op_res,
                                           opnd_create_reg(reg_new_ld_val2),
@@ -3775,7 +3775,7 @@ mangle_exclusive_monitor_op(dcontext_t *dcontext, instrlist_t *ilist, instr_t *i
          * We rule out same-block handling (which skips the addr comparison)
          * above in ldex handling.
          */
-#ifdef AARCH64
+#ifdef RISCV64
         PRE(ilist, instr,
             instr_create_save_to_tls(dcontext, DR_REG_XZR, TLS_LDSTEX_ADDR_SLOT));
 #else

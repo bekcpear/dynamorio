@@ -641,7 +641,34 @@ OPTION_DEFAULT_INTERNAL(bool, ldstex2cas, true,
                         "replace exclusive load/store with compare-and-swap to "
                         "allow instrumentation, at the risk of ABA errors")
 #endif
-/* TODO: riscv64? */
+
+/* TODO: riscv64 */
+#ifdef RISCV64
+/* we only allow register between r8 and r12(A32)/r29(A64) to be used */
+OPTION_DEFAULT_INTERNAL(uint, steal_reg, IF_X64_ELSE(28 /*r28*/, 10 /*r10*/),
+                        "the register stolen/used by DynamoRIO")
+OPTION_DEFAULT_INTERNAL(uint, steal_reg_at_reset, 0, "reg to switch to at first reset")
+/* Optimization level of mangling:
+ * 0 - no optimization,
+ * 1 - simple optimization with fast and simple analysis for low overhead
+ *     at instrumentation time,
+ * 2 - aggressive optimization with complex analysis for better performance
+ *     at execution time.
+ */
+OPTION_DEFAULT_INTERNAL(uint, opt_mangle, 1,
+                        "optimization level on optimizing mangle sequences")
+OPTION_DEFAULT_INTERNAL(bool, unsafe_build_ldstex, false,
+                        "replace blocks using exclusive load/store with a "
+                        "macro-instruction (unsafe)")
+/* TODO i#1698: ARM is still missing the abilty to convert the following:
+ * + ldrexd..strexd.
+ * + Predicated exclusive loads or stores.
+ * It will continue with a debug build warning if it sees those.
+ */
+OPTION_DEFAULT_INTERNAL(bool, ldstex2cas, true,
+                        "replace exclusive load/store with compare-and-swap to "
+                        "allow instrumentation, at the risk of ABA errors")
+#endif
 
 #ifdef WINDOWS_PC_SAMPLE
 OPTION_DEFAULT(uint, prof_pcs_DR, 2,

@@ -141,7 +141,14 @@ typedef struct _ibl_entry_pc_t {
     byte *unlinked;
 } ibl_entry_pc_t;
 #endif
-/* TODO: riscv64? */
+
+/* TODO: riscv64 */
+#ifdef RISCV64
+typedef struct _ibl_entry_pc_t {
+    byte *ibl;
+    byte *unlinked;
+} ibl_entry_pc_t;
+#endif
 
 /* All spill slots are grouped in a separate struct because with
  * -no_ibl_table_in_tls, only these slots are mapped to TLS (and the
@@ -185,7 +192,21 @@ typedef struct _spill_state_t {
 #    endif
     /* TODO i#1575: coarse-grain NYI on ARM */
 #endif
-/* TODO: riscv64? */
+/* TODO: riscv64 */
+#ifdef RISCV64
+    /* We store addresses here so we can load pointer-sized addresses into
+     * registers with a single instruction in our exit stubs and gencode.
+     */
+    /* FIXME i#1551: add Thumb vs ARM: may need two entry points here */
+    byte *fcache_return;
+    ibl_entry_pc_t trace_ibl[IBL_BRANCH_TYPE_END];
+    ibl_entry_pc_t bb_ibl[IBL_BRANCH_TYPE_END];
+    /* State for converting exclusive monitors into compare-and-swap (-ldstex2cas). */
+    ptr_uint_t ldstex_addr;
+    ptr_uint_t ldstex_value;
+    ptr_uint_t ldstex_value2; /* For 2nd value of a pair. */
+    ptr_uint_t ldstex_size;
+#endif
 } spill_state_t;
 
 typedef struct _local_state_t {
@@ -261,7 +282,15 @@ typedef struct _local_state_extended_t {
 #        define TLS_LDSTEX_FLAGS_SLOT ((ushort)offsetof(spill_state_t, ldstex_flags))
 #    endif
 #endif
-/* TODO: riscv64? */
+
+/* TODO: riscv64 */
+#ifdef RISCV64
+#    define TLS_FCACHE_RETURN_SLOT ((ushort)offsetof(spill_state_t, fcache_return))
+#    define TLS_LDSTEX_ADDR_SLOT ((ushort)offsetof(spill_state_t, ldstex_addr))
+#    define TLS_LDSTEX_VALUE_SLOT ((ushort)offsetof(spill_state_t, ldstex_value))
+#    define TLS_LDSTEX_VALUE2_SLOT ((ushort)offsetof(spill_state_t, ldstex_value2))
+#    define TLS_LDSTEX_SIZE_SLOT ((ushort)offsetof(spill_state_t, ldstex_size))
+#endif
 
 #define TABLE_OFFSET (offsetof(local_state_extended_t, table_space))
 #define TLS_MASK_SLOT(btype)                                              \
@@ -376,7 +405,8 @@ get_stack_ptr(void);
 #        define GET_FRAME_PTR(var) __asm__ __volatile__("mv %0, x29" : "=r"(var))
 #        define GET_STACK_PTR(var) __asm__ __volatile__("mv %0, sp" : "=r"(var))
 #        define GET_CUR_PC(var) \
-            __asm__ __volatile__("bl 1f; 1: str x30, %0" : "=m"(var) : : "x30")
+            __asm__ __volatile__("")
+            //__asm__ __volatile__("bl 1f; 1: str x30, %0" : "=m"(var) : : "x30")
 #    endif /* X86/ARM/RISCV64 */
 #endif     /* UNIX */
 
@@ -428,7 +458,13 @@ arch_reset_stolen_reg(void);
 void
 arch_mcontext_reset_stolen_reg(dcontext_t *dcontext, priv_mcontext_t *mc);
 #endif
-/* TODO: riscv64? */
+/* TODO: riscv64 */
+#ifdef RISCV64
+void
+arch_reset_stolen_reg(void);
+void
+arch_mcontext_reset_stolen_reg(dcontext_t *dcontext, priv_mcontext_t *mc);
+#endif
 
 bool
 is_indirect_branch_lookup_routine(dcontext_t *dcontext, cache_pc pc);
@@ -466,7 +502,13 @@ get_stolen_reg_val(priv_mcontext_t *context);
 void
 set_stolen_reg_val(priv_mcontext_t *mc, reg_t newval);
 #endif
-/* TODO: riscv64? */
+/* TODO: riscv64 */
+#ifdef RISCV64
+reg_t
+get_stolen_reg_val(priv_mcontext_t *context);
+void
+set_stolen_reg_val(priv_mcontext_t *mc, reg_t newval);
+#endif
 const char *
 get_branch_type_name(ibl_branch_type_t branch_type);
 ibl_branch_type_t
@@ -1440,7 +1482,11 @@ append_trace_speculate_last_ibl(dcontext_t *dcontext, instrlist_t *trace,
 int
 fixup_indirect_trace_exit(dcontext_t *dcontext, instrlist_t *trace);
 #endif
-/* TODO: riscv64? */
+/* TODO: riscv64 */
+#ifdef RISCV64
+int
+fixup_indirect_trace_exit(dcontext_t *dcontext, instrlist_t *trace);
+#endif
 
 uint
 forward_eflags_analysis(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr);

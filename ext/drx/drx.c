@@ -321,7 +321,13 @@ drx_aflags_are_dead(instr_t *where)
 #    define SCRATCH_REG0 DR_REG_R0
 #    define SCRATCH_REG1 DR_REG_R1
 #endif
+
 /* TODO: riscv64? */
+#ifdef RISCV64
+/* XXX i#1603: add liveness analysis and pick dead regs */
+#    define SCRATCH_REG0 DR_REG_R0
+#    define SCRATCH_REG1 DR_REG_R1
+#endif
 
 /* insert a label instruction with note */
 static void

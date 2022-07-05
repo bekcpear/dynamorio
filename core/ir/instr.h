@@ -538,7 +538,12 @@ instr_saves_float_pc(instr_t *instr);
 bool
 instr_is_icache_op(instr_t *instr);
 #endif
-/* TODO: riscv64? */
+
+/* TODO: riscv64 */
+#ifdef RISCV64
+bool
+instr_is_icache_op(instr_t *instr);
+#endif
 
 #ifdef ARM
 bool
@@ -683,7 +688,14 @@ instr_branch_type(instr_t *cti_instr);
 const char *
 get_opcode_name(int opc);
 #endif
-/* TODO: riscv64? */
+
+/* TODO: riscv64 */
+#ifdef RISCV64
+const char *
+get_opcode_name(int opc);
+#endif
+
+
 /* these routines can assume that instr's opcode is valid */
 bool
 instr_is_call_arch(instr_t *instr);
@@ -742,13 +754,21 @@ instr_reads_thread_register(instr_t *instr);
 bool
 instr_is_stolen_reg_move(instr_t *instr, bool *save, reg_id_t *reg);
 #endif
-/* TODO: riscv64? */
 
 #ifdef AARCH64
 bool
 instr_writes_thread_register(instr_t *instr);
 #endif
-/* TODO: riscv64? */
+
+/* TODO: riscv64 */
+#ifdef RISCV64
+bool
+instr_reads_thread_register(instr_t *instr);
+bool
+instr_is_stolen_reg_move(instr_t *instr, bool *save, reg_id_t *reg);
+bool
+instr_writes_thread_register(instr_t *instr);
+#endif
 
 /* N.B. : client meta routines (dr_insert_* etc.) should never use anything other
  * then TLS_XAX_SLOT unless the client has specified a slot to use as we let the

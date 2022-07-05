@@ -196,8 +196,7 @@ read_thread_register(reg_id_t reg)
      */
     ptr_uint_t sel;
     if (reg == DR_REG_TPIDRURO) {
-        IF_X64_ELSE({ asm volatile("mrs %0, tpidrro_el0"
-                                   : "=r"(sel)); },
+        IF_X64_ELSE({ asm volatile(""); },
                     {
                         /* read thread register from CP15 (coprocessor 15)
                          * c13 (software thread ID registers) with opcode 3 (user RO)
@@ -205,8 +204,7 @@ read_thread_register(reg_id_t reg)
                         asm volatile("mrc  p15, 0, %0, c13, c0, 3" : "=r"(sel));
                     });
     } else if (reg == DR_REG_TPIDRURW) {
-        IF_X64_ELSE({ asm volatile("mrs %0, tpidr_el0"
-                                   : "=r"(sel)); },
+        IF_X64_ELSE({ asm volatile(""); },
                     {
                         /* read thread register from CP15 (coprocessor 15)
                          * c13 (software thread ID registers) with opcode 2 (user RW)
@@ -238,7 +236,22 @@ write_thread_register(void *val)
 #    endif
 }
 #endif
-/* TODO: riscv64? */
+
+/* TODO: riscv64 */
+#ifdef RISCV64
+static inline bool
+write_thread_register(void *val)
+{
+#    ifdef DR_HOST_NOT_TARGET
+    ASSERT_NOT_REACHED();
+    return false;
+#    else
+    //asm volatile("msr tpidr_el0, %0" : : "r"(val));
+    asm volatile("");
+    return true;
+#    endif
+}
+#endif
 
 #if defined(LINUX) && defined(X86) && defined(X64) && !defined(ARCH_SET_GS)
 #    define ARCH_SET_GS 0x1001

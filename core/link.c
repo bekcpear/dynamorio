@@ -156,10 +156,11 @@ static const linkstub_t linkstub_starting = { LINK_FAKE, 0 };
 static const linkstub_t linkstub_reset = { LINK_FAKE, 0 };
 static const linkstub_t linkstub_syscall = { LINK_FAKE, 0 };
 /* On AArch64 we need to refer to linkstub_selfmod from aarch64.asm. */
-#ifndef AARCH64
+//#ifndef AARCH64
+/* TODO: riscv64 */
+#if (!defined(AARCH64) && !defined(RISCV64))
 static
 #endif
-/* TODO: riscv64? */
     const linkstub_t linkstub_selfmod = { LINK_FAKE, 0 };
 static const linkstub_t linkstub_ibl_deleted = { LINK_FAKE, 0 };
 static const linkstub_t linkstub_asynch = { LINK_FAKE, 0 };

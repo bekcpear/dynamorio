@@ -233,7 +233,12 @@ os_tls_thread_exit(local_state_t *local_state);
 bool
 os_set_app_tls_base(dcontext_t *dcontext, reg_id_t reg, void *base);
 #endif
-/* TODO: riscv64? */
+
+/* TODO: riscv64 */
+#ifdef RISCV64
+bool
+os_set_app_tls_base(dcontext_t *dcontext, reg_id_t reg, void *base);
+#endif
 
 #ifdef MACOS
 /* xref i#1404: we should expose these via the dr_get_os_version() API */

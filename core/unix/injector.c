@@ -74,7 +74,10 @@
 #if defined(LINUX) && defined(AARCH64)
 #    include <linux/ptrace.h> /* for struct user_pt_regs */
 #endif
-/* TODO: riscv64? */
+/* TODO: riscv64 */
+#if defined(LINUX) && defined(RISCV64)
+#    include <linux/ptrace.h> /* for struct user_pt_regs */
+#endif
 #include <sys/uio.h> /* for struct iovec */
 #include <sys/user.h>
 #include <sys/wait.h>
@@ -982,7 +985,10 @@ static const enum_name_pair_t pt_req_map[] = { { PTRACE_TRACEME, "PTRACE_TRACEME
 #    ifdef DR_HOST_AARCH64
                                                { PTRACE_GETREGSET, "PTRACE_GETREGSET" },
                                                { PTRACE_SETREGSET, "PTRACE_SETREGSET" },
-/* TODO: riscv64? */
+/* TODO: riscv64 */
+#    elif defined(DR_HOST_RISCV64)
+                                               { PTRACE_GETREGSET, "PTRACE_GETREGSET" },
+                                               { PTRACE_SETREGSET, "PTRACE_SETREGSET" },
 #    else
                                                { PTRACE_PEEKUSER, "PTRACE_PEEKUSER" },
                                                { PTRACE_POKEUSER, "PTRACE_POKEUSER" },
@@ -1338,8 +1344,16 @@ injectee_run_get_retval(dr_inject_info_t *info, void *dc, instrlist_t *ilist)
     if (r < 0)
         return r;
     regs.REG_PC_FIELD = saved_pc;
+#    elif defined(RISCV64)
+    /* TODO: riscv64 */
+    /* POKEUSER is not available. */
+    ptr_int_t saved_pc = regs.REG_PC_FIELD;
+    regs.REG_PC_FIELD = (ptr_int_t)(pc + offset);
+    r = our_ptrace_setregs(info->pid, &regs);
+    if (r < 0)
+        return r;
+    regs.REG_PC_FIELD = saved_pc;
 #    else
-     /* TODO: riscv64? */
     r = our_ptrace(PTRACE_POKEUSER, info->pid, (void *)REG_PC_OFFSET, pc + offset);
     if (r < 0)
         return r;
@@ -1356,8 +1370,15 @@ injectee_run_get_retval(dr_inject_info_t *info, void *dc, instrlist_t *ilist)
     if (r < 0)
         return r;
     ret = modified_regs.REG_RETVAL_FIELD;
+#    elif defined(RISCV64)
+    /* TODO: riscv64? */
+    /* PEEKUSER is not available. */
+    struct USER_REGS_TYPE modified_regs;
+    r = our_ptrace_getregs(info->pid, &modified_regs);
+    if (r < 0)
+        return r;
+    ret = modified_regs.REG_RETVAL_FIELD;
 #    else
-     /* TODO: riscv64? */
     r = our_ptrace(PTRACE_PEEKUSER, info->pid,
                    (void *)offsetof(struct USER_REGS_TYPE, REG_RETVAL_FIELD), &ret);
     if (r < 0)

@@ -495,8 +495,12 @@ get_selfmod_linkstub(void);
 /* On AArch64 we need to refer to linkstub_selfmod from aarch64.asm. */
 extern const linkstub_t linkstub_selfmod;
 #endif
+/* TODO: riscv64? */
+#ifdef RISCV64
+/* On AArch64 we need to refer to linkstub_selfmod from aarch64.asm. */
+extern const linkstub_t linkstub_selfmod;
+#endif
 /*
- * TODO: riscv64?
  * TODO: linkstub_selfmod?
  */
 const linkstub_t *

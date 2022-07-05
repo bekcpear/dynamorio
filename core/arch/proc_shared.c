@@ -67,7 +67,10 @@ cpu_info_t cpu_info = { VENDOR_UNKNOWN,
 #ifdef AARCHXX
                         0,
 #endif
-/* TODO: riscv64? */
+/* TODO: riscv64 */
+#ifdef RISCV64
+                        0,
+#endif
                         0,
                         0,
                         0,
@@ -203,7 +206,15 @@ proc_get_architecture(void)
     return cpu_info.architecture;
 }
 #endif
-/* TODO: riscv64? */
+
+/* TODO: riscv64 */
+#ifdef RISCV64
+uint
+proc_get_architecture(void)
+{
+    return cpu_info.architecture;
+}
+#endif
 
 features_t *
 proc_get_all_feature_bits(void)

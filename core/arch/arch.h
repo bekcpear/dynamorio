@@ -605,7 +605,16 @@ instr_t *
 mangle_exclusive_monitor_op(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
                             instr_t *next_instr);
 #endif
-/* TODO: riscv64? */
+/* TODO: riscv64 */
+#ifdef RISCV64
+/* mangle instructions that use pc or dr_reg_stolen */
+instr_t *
+mangle_special_registers(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
+                         instr_t *next_instr);
+instr_t *
+mangle_exclusive_monitor_op(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
+                            instr_t *next_instr);
+#endif
 void
 mangle_insert_clone_code(dcontext_t *dcontext, instrlist_t *ilist,
                          instr_t *instr _IF_X86_64(gencode_mode_t mode));
@@ -656,10 +665,20 @@ insert_push_all_registers(dcontext_t *dcontext, clean_call_info_t *cci,
                           instrlist_t *ilist, instr_t *instr, uint alignment,
                           opnd_t push_pc,
                           reg_id_t scratch /*optional*/
+/* TODO: riscv64 */
+#ifdef AARCH64
                               _IF_AARCH64(bool out_of_line));
+#elif defined(RISCV64)
+                              _IF_RISCV64(bool out_of_line));
+#endif
 void
 insert_pop_all_registers(dcontext_t *dcontext, clean_call_info_t *cci, instrlist_t *ilist,
+/* TODO: riscv64 */
+#ifdef AARCH64
                          instr_t *instr, uint alignment _IF_AARCH64(bool out_of_line));
+#elif defined(RISCV64)
+                         instr_t *instr, uint alignment _IF_RISCV64(bool out_of_line));
+#endif
 bool
 insert_reachable_cti(dcontext_t *dcontext, instrlist_t *ilist, instr_t *where,
                      byte *encode_pc, byte *target, bool jmp, bool returns, bool precise,
@@ -688,7 +707,18 @@ insert_restore_inline_registers(dcontext_t *dcontext, instrlist_t *ilist, instr_
                                 void *ci);
 
 #endif
-/* TODO: riscv64? */
+/* TODO: riscv64 */
+#ifdef RISCV64
+void
+insert_save_inline_registers(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
+                             bool *reg_skip, reg_id_t first_reg, bool is_gpr, void *ci);
+
+void
+insert_restore_inline_registers(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
+                                bool *reg_skip, reg_id_t first_reg, bool is_gpr,
+                                void *ci);
+
+#endif
 
 #ifdef WINDOWS
 bool
@@ -756,7 +786,18 @@ instr_t *
 mangle_writes_thread_register(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
                               instr_t *next_instr);
 #endif /* AARCH64 */
-/* TODO: riscv64? */
+/* TODO: riscv64 */
+#ifdef RISCV64
+instr_t *
+mangle_icache_op(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
+                 instr_t *next_instr, app_pc pc);
+instr_t *
+mangle_reads_thread_register(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
+                             instr_t *next_instr);
+instr_t *
+mangle_writes_thread_register(dcontext_t *dcontext, instrlist_t *ilist, instr_t *instr,
+                              instr_t *next_instr);
+#endif /* RISCV64 */
 
 /* offsets within local_state_t used for specific scratch purposes */
 enum {
@@ -969,7 +1010,10 @@ typedef struct _generated_code_t {
 #ifdef AARCHXX
     byte *fcache_enter_gonative;
 #endif
-/* TODO: riscv64? */
+/* TODO: riscv64 */
+#ifdef RISCV64
+    byte *fcache_enter_gonative;
+#endif
 #ifdef WINDOWS
     byte *fcache_enter_indirect;
     byte *do_callback_return;
@@ -1253,9 +1297,19 @@ emit_do_syscall(dcontext_t *dcontext, generated_code_t *code, byte *pc,
 uint *
 insert_mov_imm(uint *pc, reg_id_t dst, ptr_int_t val);
 #endif
-/* TODO: riscv64? */
 
 #ifdef AARCHXX
+byte *
+emit_fcache_enter_gonative(dcontext_t *dcontext, generated_code_t *code, byte *pc);
+#endif
+
+/* TODO: riscv64 */
+#ifdef RISCV64
+/* Generate move (immediate) of a 64-bit value using at most 4 instructions.
+ * pc must be a writable (vmcode) pc.
+ */
+uint *
+insert_mov_imm(uint *pc, reg_id_t dst, ptr_int_t val);
 byte *
 emit_fcache_enter_gonative(dcontext_t *dcontext, generated_code_t *code, byte *pc);
 #endif
@@ -1555,7 +1609,12 @@ translate_x86_to_x64(dcontext_t *dcontext, instrlist_t *ilist, INOUT instr_t **i
 bool
 instr_is_ldstex_mangling(dcontext_t *dcontext, instr_t *inst);
 #endif
-/* TODO: riscv64? */
+
+/* TODO: riscv64 */
+#ifdef RISCV64
+bool
+instr_is_ldstex_mangling(dcontext_t *dcontext, instr_t *inst);
+#endif
 
 /****************************************************************************
  * Platform-independent emit_utils_shared.c
@@ -1575,7 +1634,16 @@ get_fcache_return_tls_offs(dcontext_t *dcontext, uint flags);
 size_t
 get_ibl_entry_tls_offs(dcontext_t *dcontext, cache_pc ibl_entry);
 #endif
-/* TODO: riscv64? */
+
+/* TODO: riscv64 */
+#ifdef RISCV64
+size_t
+get_fcache_return_tls_offs(dcontext_t *dcontext, uint flags);
+
+size_t
+get_ibl_entry_tls_offs(dcontext_t *dcontext, cache_pc ibl_entry);
+#endif
+
 
 void
 link_indirect_exit_arch(dcontext_t *dcontext, fragment_t *f, linkstub_t *l,
@@ -1822,5 +1890,9 @@ instrlist_convert_to_x86(instrlist_t *ilist);
 bool
 mrs_id_reg_supported(void);
 #endif
-/* TODO: riscv64? */
+/* TODO: riscv64 */
+#ifdef RISCV64
+bool
+mrs_id_reg_supported(void);
+#endif
 #endif /* ARCH_H */

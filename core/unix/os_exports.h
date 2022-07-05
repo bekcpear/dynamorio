@@ -173,7 +173,27 @@ extern uint android_tls_base_offs;
 #    define USR_TLS_COPROC_15 15
 #endif
 
-/* TODO: riscv64? */
+/* TODO: riscv64 */
+#ifdef RISCV64
+/* The TLS slot for DR's TLS base.
+ * On ARM, we use the 'private' field of the tcbhead_t to store DR TLS base,
+ * as we can't use the alternate TLS register b/c the kernel doesn't preserve it.
+ *   typedef struct
+ *   {
+ *     dtv_t *dtv;
+ *     void *private;
+ *   } tcb_head_t;
+ * When using the private loader, we control all the TLS allocation and
+ * should be able to avoid using that field.
+ * This is also used in asm code, so we use literal instead of sizeof.
+ */
+#    define DR_TLS_BASE_OFFSET IF_X64_ELSE(8, 4) /* skip dtv */
+/* opcode for reading usr mode TLS base (user-read-only-thread-ID-register)
+ * mrc p15, 0, reg_app, c13, c0, 3
+ */
+#    define USR_TLS_REG_OPCODE 3
+#    define USR_TLS_COPROC_15 15
+#endif
 
 #ifdef LINUX
 #    include "include/clone3.h"
@@ -513,7 +533,18 @@ void
 set_app_lib_tls_base_from_clone_record(dcontext_t *dcontext, void *record);
 #endif
 
-/* TODO: riscv64? */
+/* TODO: riscv64 */
+#ifdef RISCV64
+reg_t
+get_clone_record_stolen_value(void *record);
+
+void
+set_thread_register_from_clone_record(void *record);
+
+void
+set_app_lib_tls_base_from_clone_record(dcontext_t *dcontext, void *record);
+#endif
+
 
 void
 restore_clone_param_from_clone_record(dcontext_t *dcontext, void *record);

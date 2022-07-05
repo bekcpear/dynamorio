@@ -120,7 +120,15 @@ reg_spill_tls_offs(reg_id_t reg)
          * and must be special-cased vs other spills.
          */
 #endif
-/* TODO: riscv64? */
+/* TODO: riscv64 */
+#ifdef RISCV64
+    case SCRATCH_REG4: return TLS_REG4_SLOT;
+    case SCRATCH_REG5:
+        return TLS_REG5_SLOT;
+        /* We do not include the stolen reg slot b/c its load+stores are reversed
+         * and must be special-cased vs other spills.
+         */
+#endif
     }
     /* don't assert if another reg passed: used on random regs looking for spills */
     return -1;
@@ -648,7 +656,50 @@ arch_mcontext_reset_stolen_reg(dcontext_t *dcontext, priv_mcontext_t *mc)
     set_stolen_reg_val(mc, (reg_t)os_get_dr_tls_base(dcontext));
 }
 #endif /* AARCHXX */
-/* TODO: riscv64? */
+
+/* TODO: riscv64 */
+#ifdef RISCV64
+/* Called during a reset when all threads are suspended */
+void
+arch_reset_stolen_reg(void)
+{
+    /* We have no per-thread gencode.  We simply re-emit on top of the existing
+     * shared_code, which means we do not need to update each thread's pointers
+     * to gencode stored in TLS.
+     */
+    dcontext_t *dcontext;
+    if (DR_REG_R0 + INTERNAL_OPTION(steal_reg_at_reset) == dr_reg_stolen)
+        return;
+    SYSLOG_INTERNAL_INFO("swapping stolen reg from %s to %s", reg_names[dr_reg_stolen],
+                         reg_names[DR_REG_R0 + INTERNAL_OPTION(steal_reg_at_reset)]);
+    dcontext = get_thread_private_dcontext();
+    ASSERT(dcontext != NULL);
+
+    SELF_UNPROTECT_DATASEC(DATASEC_RARELY_PROT);
+    dr_reg_stolen = DR_REG_R0 + INTERNAL_OPTION(steal_reg_at_reset);
+    ASSERT(dr_reg_stolen >= DR_REG_STOLEN_MIN && dr_reg_stolen <= DR_REG_STOLEN_MAX);
+    protect_generated_code(shared_code, WRITABLE);
+    shared_gencode_emit(shared_code);
+    protect_generated_code(shared_code, READONLY);
+    SELF_PROTECT_DATASEC(DATASEC_RARELY_PROT);
+
+    DOLOG(3, LOG_EMIT, {
+        dump_emitted_routines(GLOBAL_DCONTEXT, GLOBAL, "swap stolen reg", shared_code,
+                              shared_code->gen_end_pc);
+    });
+}
+
+void
+arch_mcontext_reset_stolen_reg(dcontext_t *dcontext, priv_mcontext_t *mc)
+{
+    /* Put the app value in the old stolen reg */
+    *(reg_t *)(((byte *)mc) +
+               opnd_get_reg_dcontext_offs(DR_REG_R0 + INTERNAL_OPTION(steal_reg))) =
+        dcontext->local_state->spill_space.reg_stolen;
+    /* Put the TLs base into the new stolen reg */
+    set_stolen_reg_val(mc, (reg_t)os_get_dr_tls_base(dcontext));
+}
+#endif /* RISCV64 */
 
 #if defined(X86) && defined(X64)
 /* Sets other-mode ibl targets, for mixed-mode and x86_to_x64 mode */
@@ -3865,7 +3916,21 @@ set_stolen_reg_val(priv_mcontext_t *mc, reg_t newval)
     *(reg_t *)(((byte *)mc) + opnd_get_reg_dcontext_offs(dr_reg_stolen)) = newval;
 }
 #endif
-/* TODO: riscv64? */
+
+/* TODO: riscv64 */
+#ifdef RISCV64
+reg_t
+get_stolen_reg_val(priv_mcontext_t *mc)
+{
+    return *(reg_t *)(((byte *)mc) + opnd_get_reg_dcontext_offs(dr_reg_stolen));
+}
+
+void
+set_stolen_reg_val(priv_mcontext_t *mc, reg_t newval)
+{
+    *(reg_t *)(((byte *)mc) + opnd_get_reg_dcontext_offs(dr_reg_stolen)) = newval;
+}
+#endif
 
 #ifdef PROFILE_RDTSC
 /* This only works on Pentium I or later */

@@ -290,7 +290,12 @@ prepare_for_clean_call(dcontext_t *dcontext, clean_call_info_t *cci, instrlist_t
     } else {
         dstack_offs +=
             insert_push_all_registers(dcontext, cci, ilist, instr, (uint)PAGE_SIZE,
+/* TODO: riscv64 */
+#ifdef AARCH64
                                       OPND_CREATE_INT32(0), REG_NULL _IF_AARCH64(false));
+#elif defined(RISCV64)
+                                      OPND_CREATE_INT32(0), REG_NULL _IF_RISCV64(false));
+#endif
 
         insert_clear_eflags(dcontext, cci, ilist, instr);
         /* XXX: add a cci field for optimizing this away if callee makes no calls */
@@ -371,7 +376,12 @@ cleanup_after_clean_call(dcontext_t *dcontext, clean_call_info_t *cci, instrlist
         /* XXX: add a cci field for optimizing this away if callee makes no calls */
         insert_pop_all_registers(dcontext, cci, ilist, instr,
                                  /* see notes in prepare_for_clean_call() */
+/* TODO: riscv64 */
+#ifdef AARCH64
                                  (uint)PAGE_SIZE _IF_AARCH64(false));
+#elif defined(RISCV64)
+                                 (uint)PAGE_SIZE _IF_RISCV64(false));
+#endif
     }
 
     /* Swap stacks back.  For thread-shared, we need to get the dcontext
@@ -882,7 +892,16 @@ mangle_rseq_write_exit_reason(dcontext_t *dcontext, instrlist_t *ilist,
     insert_mov_immed_ptrsz(dcontext, EXIT_REASON_RSEQ_ABORT, opnd_create_reg(scratch2),
                            ilist, insert_at, NULL, NULL);
 #    endif
-     /* TODO: riscv64? */
+     /* TODO: riscv64 */
+#    ifdef RISCV64
+    /* We need a 2nd scratch for our immediate. */
+    ASSERT(SCRATCH_ALWAYS_TLS());
+    reg_id_t scratch2 =
+        (scratch_reg == DR_REG_START_GPR) ? DR_REG_START_GPR + 1 : DR_REG_START_GPR;
+    PRE(ilist, insert_at, instr_create_save_to_tls(dcontext, scratch2, TLS_REG2_SLOT));
+    insert_mov_immed_ptrsz(dcontext, EXIT_REASON_RSEQ_ABORT, opnd_create_reg(scratch2),
+                           ilist, insert_at, NULL, NULL);
+#    endif
     PRE(ilist, insert_at,
         XINST_CREATE_store_2bytes(dcontext,
                                   opnd_create_dcontext_field_via_reg_sz(
@@ -893,7 +912,11 @@ mangle_rseq_write_exit_reason(dcontext_t *dcontext, instrlist_t *ilist,
     PRE(ilist, insert_at,
         instr_create_restore_from_tls(dcontext, scratch2, TLS_REG2_SLOT));
 #    endif
-     /* TODO: riscv64? */
+     /* TODO: riscv64 */
+#    ifdef RISCV64
+    PRE(ilist, insert_at,
+        instr_create_restore_from_tls(dcontext, scratch2, TLS_REG2_SLOT));
+#    endif
     if (SCRATCH_ALWAYS_TLS()) {
         PRE(ilist, insert_at,
             instr_create_restore_from_tls(dcontext, scratch_reg, TLS_REG1_SLOT));

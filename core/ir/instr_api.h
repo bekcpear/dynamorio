@@ -1095,7 +1095,20 @@ DR_API
 dr_pred_type_t
 instr_invert_predicate(dr_pred_type_t pred);
 #endif
-/* TODO: riscv64? */
+
+/* TODO: riscv64 */
+#ifdef RISCV64
+DR_API
+/**
+ * Returns the DR_PRED_ constant that represents the opposite condition
+ * from \p pred.  A valid conditional branch predicate must be passed (i.e.,
+ * not #DR_PRED_NONE, #DR_PRED_AL, or #DR_PRED_OP for ARM and not #DR_PRED_NONE,
+ * #DR_PRED_AL, or #DR_PRED_NV for AArch64).
+ * \note ARM and AArch64-only.
+ */
+dr_pred_type_t
+instr_invert_predicate(dr_pred_type_t pred);
+#endif
 
 #ifdef ARM
 DR_API

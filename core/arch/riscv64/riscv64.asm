@@ -81,7 +81,6 @@ DECL_EXTERN(d_r_internal_error)
  */
         DECLARE_FUNC(unexpected_return)
 GLOBAL_LABEL(unexpected_return:)
-        JUMP  GLOBAL_REF(unexpected_return)
         END_FUNC(unexpected_return)
 
 /* bool mrs_id_reg_supported(void)

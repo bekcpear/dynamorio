@@ -229,7 +229,18 @@ typedef struct _clone_record_t {
      */
     void *app_lib_tls_base;
 #endif
-/* TODO: riscv64? */
+/* TODO: riscv64 */
+#ifdef RISCV64
+    /* To ensure we have the right value as of the point of the clone, we
+     * store it here (we'll have races if we try to get it during new thread
+     * init).
+     */
+    reg_t app_stolen_value;
+    /* To ensure we have the right app lib tls base in child thread,
+     * we store it here if necessary (clone w/o CLONE_SETTLS or vfork).
+     */
+    void *app_lib_tls_base;
+#endif
     /* we leave some padding at base of stack for dynamorio_clone
      * to store values
      */
@@ -995,7 +1006,37 @@ set_app_lib_tls_base_from_clone_record(dcontext_t *dcontext, void *record)
     }
 }
 #endif
-/* TODO: riscv64? */
+
+/* TODO: riscv64 */
+#ifdef RISCV64
+reg_t
+get_clone_record_stolen_value(void *record)
+{
+    ASSERT(record != NULL);
+    return ((clone_record_t *)record)->app_stolen_value;
+}
+
+void
+set_thread_register_from_clone_record(void *record)
+{
+    /* If record->app_lib_tls_base is not NULL, it means the parent
+     * thread did not setup TLS for the child, and we need clear the
+     * thread register.
+     */
+    if (((clone_record_t *)record)->app_lib_tls_base != NULL)
+        write_thread_register(NULL);
+}
+
+void
+set_app_lib_tls_base_from_clone_record(dcontext_t *dcontext, void *record)
+{
+    if (((clone_record_t *)record)->app_lib_tls_base != NULL) {
+        /* child and parent share the same TLS */
+        os_set_app_tls_base(dcontext, TLS_REG_LIB,
+                            ((clone_record_t *)record)->app_lib_tls_base);
+    }
+}
+#endif
 
 void
 restore_clone_param_from_clone_record(dcontext_t *dcontext, void *record)
@@ -3025,7 +3066,23 @@ set_sigcontext_isa_mode(sig_full_cxt_t *sc_full, dr_isa_mode_t isa_mode)
 }
 #    endif
 #endif
-/* TODO: riscv64? */
+
+/* TODO: riscv64 */
+/*
+#ifdef RISCV64
+static void
+set_sigcxt_stolen_reg(sigcontext_t *sc, reg_t val)
+{
+    *(&sc->SC_R0 + (dr_reg_stolen - DR_REG_R0)) = val;
+}
+
+static reg_t
+get_sigcxt_stolen_reg(sigcontext_t *sc)
+{
+    return *(&sc->SC_R0 + (dr_reg_stolen - DR_REG_R0));
+}
+#endif
+*/
 
 /* Returns whether successful.  If avoid_failure, tries to translate
  * at least pc if not successful.  Pass f if known.
@@ -3185,8 +3242,8 @@ thread_set_self_context(void *cxt)
      * TODO: riscv64
      * TODO: this is a copy of AARCH64
      */
-    asm("mv  " ASM_XSP ", %0" : : "r"(xsp_for_sigreturn));
-    asm("b    dynamorio_sigreturn");
+    //asm("mv  " ASM_XSP ", %0" : : "r"(xsp_for_sigreturn));
+    //asm("b    dynamorio_sigreturn");
 #endif /* X86/AARCH64/ARM/RISCV64 */
     ASSERT_NOT_REACHED();
 }
@@ -3268,7 +3325,10 @@ sig_has_restorer(thread_sig_info_t *info, int sig)
      */
     return false;
 #    endif
-     /* TODO: riscv64? */
+     /* TODO: riscv64 */
+#    ifdef RISCV64
+    return false;
+#    endif
     if (info->sighand->action[sig]->restorer == NULL)
         return false;
     /* we cache the result due to the safe_read cost */
@@ -8170,13 +8230,13 @@ notify_and_jmp_without_stack(KSYNCH_TYPE *notify_var, byte *continuation, byte *
          * TODO: riscv64
          * TODO: this is a copy of AARCHXX
          */
-        asm("ldr " ASM_R0 ", %0" : : "m"(notify_var));
-        asm("mv " ASM_R1 ", #1");
-        asm("str " ASM_R1 ",[" ASM_R0 "]");
-        asm("ldr " ASM_R1 ", %0" : : "m"(continuation));
-        asm("ldr " ASM_R2 ", %0" : : "m"(xsp));
-        asm("mv " ASM_XSP ", " ASM_R2); /* Clobber xsp last (see above). */
-        asm("b dynamorio_condvar_wake_and_jmp");
+        //asm("ldr " ASM_R0 ", %0" : : "m"(notify_var));
+        //asm("mv " ASM_R1 ", #1");
+        //asm("str " ASM_R1 ",[" ASM_R0 "]");
+        //asm("ldr " ASM_R1 ", %0" : : "m"(continuation));
+        //asm("ldr " ASM_R2 ", %0" : : "m"(xsp));
+        //asm("mv " ASM_XSP ", " ASM_R2); /* Clobber xsp last (see above). */
+        //asm("b dynamorio_condvar_wake_and_jmp");
 #endif
     } else {
         ksynch_set_value(notify_var, 1);
@@ -8196,10 +8256,10 @@ notify_and_jmp_without_stack(KSYNCH_TYPE *notify_var, byte *continuation, byte *
          * TODO: riscv64
          * TODO: this is a copy of AARCHXX
          */
-        asm("ldr " ASM_R0 ", %0" : : "m"(continuation));
-        asm("ldr " ASM_R1 ", %0" : : "m"(xsp)); /* Clobber xsp last (see above). */
-        asm("mv " ASM_XSP ", " ASM_R1);
-        asm(ASM_INDJMP " " ASM_R0);
+        //asm("ldr " ASM_R0 ", %0" : : "m"(continuation));
+        //asm("ldr " ASM_R1 ", %0" : : "m"(xsp)); /* Clobber xsp last (see above). */
+        //asm("mv " ASM_XSP ", " ASM_R1);
+        //asm(ASM_INDJMP " " ASM_R0);
 #endif /* X86/ARM/RISCV64 */
     }
 }

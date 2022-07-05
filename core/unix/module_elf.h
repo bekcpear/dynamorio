@@ -198,13 +198,13 @@
 #    define ELF_R_TYPE ELF64_R_TYPE
 #    define ELF_R_SYM ELF64_R_SYM
 /* relocation type */
-#    define ELF_R_NONE R_RISCV64_NONE           /* No relocation. */
-#    define ELF_R_DIRECT R_RISCV64_ABS64        /* Direct 64 bit. */
-#    define ELF_R_COPY R_RISCV64_COPY           /* Copy symbol at runtime. */
-#    define ELF_R_GLOB_DAT R_RISCV64_GLOB_DAT   /* Create GOT entry. */
-#    define ELF_R_JUMP_SLOT R_RISCV64_JUMP_SLOT /* Create PLT entry. */
-#    define ELF_R_RELATIVE R_RISCV64_RELATIVE   /* Adjust by program base. */
-#    define ELF_R_IRELATIVE R_RISCV64_IRELATIVE /* STT_GNU_IFUNC relocation. */
+#    define ELF_R_NONE R_RISCV_NONE           /* No relocation. */
+#    define ELF_R_DIRECT R_RISCV_64        /* Direct 64 bit. */
+#    define ELF_R_COPY R_RISCV_COPY           /* Copy symbol at runtime. */
+#    define ELF_R_GLOB_DAT R_RISCV_GOT_HI20   /* Create GOT entry. */
+#    define ELF_R_JUMP_SLOT R_RISCV_CALL_PLT /* Create PLT entry. */
+#    define ELF_R_RELATIVE R_RISCV_RELATIVE   /* Adjust by program base. */
+#    define ELF_R_IRELATIVE R_RISCV_IRELATIVE /* STT_GNU_IFUNC relocation. */
 /* tls related */
 #    define ELF_R_TLS_DTPMOD 1028 /* R_AARCH64_TLS_DTPMOD64 Module number. */
 #    define ELF_R_TLS_TPOFF 1030  /* R_AARCH64_TLS_TPREL64  TP-relative offset. */

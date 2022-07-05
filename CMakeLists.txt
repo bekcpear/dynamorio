@@ -1722,7 +1722,6 @@ function (register_tool_file name)
 endfunction ()
 
 # Used by docs, samples, and tests, so here instead of in core/CMakeLists.txt.
-# TODO: riscv64?
 # Set VERSION_NUMBER_INTEGER in dr_api.h:
 DR_export_header(${PROJECT_SOURCE_DIR}/core/lib/dr_api.h dr_api.h)
 if (NOT ANNOTATIONS)
@@ -1734,6 +1733,10 @@ endif ()
 add_custom_target(api_headers)
 if (AARCH64)
   add_dependencies(api_headers gen_aarch64_codec gen_aarch64_opcodes)
+endif()
+# TODO: riscv64
+if (RISCV64)
+  add_dependencies(api_headers gen_riscv64_codec gen_riscv64_opcodes)
 endif()
 
 DR_export_header(${PROJECT_SOURCE_DIR}/core/lib/dr_app.h dr_app.h)

@@ -80,7 +80,23 @@ if (AARCH64)
     ${aarch64_exported_opcodes} VERBATIM)
 endif ()
 
-# TODO: riscv64?
+# TODO: riscv64
+if (RISCV64)
+  # Required for opcode_api.h and codec headers, which are auto-generated on AArch64.
+  include(../make/CMake_riscv64_gen_codec.cmake)
+  add_custom_target(gen_riscv64_codec DEPENDS "${RISCV64_CODEC_GEN_SRCS}")
+  include_directories(BEFORE ${PROJECT_BINARY_DIR})
+  # Export the generated opcode header.  Use a custom target and command to avoid
+  # repeated re-copying (a POST_BUILD with copy_if_different doesn't seem to work how
+  # it should: it still runs the command every time, though it doesn't copy anything).
+  set(riscv64_exported_opcodes ${BUILD_INCLUDE}/dr_ir_opcodes_riscv64.h)
+  add_custom_target(gen_riscv64_opcodes DEPENDS ${riscv64_exported_opcodes})
+  add_custom_command(OUTPUT ${riscv64_exported_opcodes}
+    DEPENDS ${PROJECT_BINARY_DIR}/opcode_api.h
+    COMMAND ${CMAKE_COMMAND}
+    ARGS -E copy ${PROJECT_BINARY_DIR}/opcode_api.h
+    ${riscv64_exported_opcodes} VERBATIM)
+endif ()
 
 set(asm_deps
   "${PROJECT_SOURCE_DIR}/core/arch/asm_defines.asm"
@@ -146,7 +162,10 @@ add_gen_events_deps(drlibc)
 if (AARCH64)
   add_dependencies(drlibc gen_aarch64_codec)
 endif (AARCH64)
-# TODO: riscv64?
+# TODO: riscv64
+if (RISCV64)
+  add_dependencies(drlibc gen_riscv64_codec)
+endif (RISCV64)
 if (WIN32 AND "${CMAKE_GENERATOR}" MATCHES "Visual Studio")
   # for parallel build correctness we need a target dependence
   add_dependencies(drlibc ${drlibc_xarch_asm_tgt} ${drlibc_arch_asm_tgt})
@@ -506,6 +525,9 @@ function (configure_core_lib target)
     add_dependencies(${target} gen_aarch64_codec)
   endif()
   # TODO: riscv64
+  if (RISCV64)
+    add_dependencies(${target} gen_riscv64_codec)
+  endif()
   if (WIN32)
     # Since we're forced to use link-line flags instead of target_link_libraries
     # for dynamorio, we have to add a real target dependence here for correct
@@ -902,6 +924,9 @@ if (AARCH64)
   add_dependencies(${PRELOAD_NAME} gen_aarch64_codec)
 endif()
 # TODO: riscv64
+if (RISCV64)
+  add_dependencies(${PRELOAD_NAME} gen_riscv64_codec)
+endif()
 
 if ("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
   add_dependencies(${PRELOAD_NAME} ${preinject_asm_tgt})
@@ -979,6 +1004,9 @@ if (AARCH64)
   add_dependencies(drdecode gen_aarch64_codec)
 endif()
 # TODO: riscv64
+if (RISCV64)
+  add_dependencies(drdecode gen_riscv64_codec)
+endif()
 target_link_libraries(drdecode drlibc)
 
 ###########################################################################

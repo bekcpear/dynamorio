@@ -3553,11 +3553,13 @@ instr_create_jump_via_dcontext(dcontext_t *dcontext, int offs)
 #    ifdef AARCH64
     ASSERT_NOT_IMPLEMENTED(false); /* FIXME i#1569 */
     return 0;
+#    elif defined(RISCV64)
+    ASSERT_NOT_IMPLEMENTED(false); /* TODO: riscv64 */
+    return 0;
 #    else
     opnd_t memopnd = opnd_create_dcontext_field(dcontext, offs);
     return XINST_CREATE_jump_mem(dcontext, memopnd);
 #    endif
-     /* TODO: riscv64? */
 }
 
 /* there is no corresponding save routine since we no longer support

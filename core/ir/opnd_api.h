@@ -273,7 +273,10 @@ enum {
 #ifdef AARCH64
 #    define OPSZ_sys OPSZ_1 /**< Operand size for sys instruction memory reference. */
 #endif
-/* TODO: riscv64? */
+/* TODO: riscv64 */
+#ifdef RISCV64
+#    define OPSZ_sys OPSZ_1 /**< Operand size for sys instruction memory reference. */
+#endif
 
 /* We encode this enum plus the OPSZ_ extensions in bytes, so we can have
  * at most 256 total DR_REG_ plus OPSZ_ values.  Currently there are 165-odd.
@@ -1131,6 +1134,7 @@ enum {
      * TODO: riscv64
      * TODO: this is a copy of AARCHXX
      */
+    DR_REG_INVALID, /**< Sentinel value indicating an invalid register. */
     /* 64-bit general purpose */
     DR_REG_X0,  /**< The "x0" register. */
     DR_REG_X1,  /**< The "x1" register. */
@@ -2475,7 +2479,32 @@ opnd_create_base_disp_aarch64(reg_id_t base_reg, reg_id_t index_reg,
                               dr_extend_type_t extend_type, bool scaled, int disp,
                               dr_opnd_flags_t flags, opnd_size_t size);
 #endif
-/* TODO: riscv64? */
+
+/* TODO: riscv64 */
+#ifdef RISCV64
+DR_API
+/**
+ * Returns a memory reference operand that refers to either a base
+ * register with a constant displacement:
+ * - [base_reg, disp]
+ *
+ * Or a base register plus an optionally extended and shifted index register:
+ * - [base_reg, index_reg, extend_type, shift_amount]
+ *
+ * The shift_amount is zero or, if \p scaled, a value determined by the
+ * size of the operand.
+ *
+ * The resulting operand has data size \p size (must be an OPSZ_ constant).
+ * Both \p base_reg and \p index_reg must be DR_REG_ constants.
+ * Either \p index_reg must be #DR_REG_NULL or disp must be 0.
+ *
+ * \note AArch64-only.
+ */
+opnd_t
+opnd_create_base_disp_aarch64(reg_id_t base_reg, reg_id_t index_reg,
+                              dr_extend_type_t extend_type, bool scaled, int disp,
+                              dr_opnd_flags_t flags, opnd_size_t size);
+#endif
 
 DR_API
 /**
@@ -3039,7 +3068,33 @@ DR_API
 bool
 opnd_set_index_extend(opnd_t *opnd, dr_extend_type_t extend, bool scaled);
 #endif /* AARCH64 */
-/* TODO: riscv64? */
+
+/* TODO: riscv64 */
+#ifdef RISCV64
+DR_API
+/**
+ * Assumes \p opnd is a base+disp memory reference.
+ * Returns the extension type, whether the offset is \p scaled, and the shift \p amount.
+ * The register offset will be extended, then shifted, then added to the base register.
+ * If there is no extension and no shift the values returned will be #DR_EXTEND_UXTX,
+ * false, and zero.
+ * \note AArch64-only.
+ */
+dr_extend_type_t
+opnd_get_index_extend(opnd_t opnd, OUT bool *scaled, OUT uint *amount);
+
+DR_API
+/**
+ * Assumes \p opnd is a base+disp memory reference.
+ * Sets the index register to be extended by \p extend and optionally \p scaled.
+ * Returns whether successful. If the offset is scaled the amount it is shifted
+ * by is determined by the size of the memory operand.
+ * \note AArch64-only.
+ */
+bool
+opnd_set_index_extend(opnd_t *opnd, dr_extend_type_t extend, bool scaled);
+#endif /* AARCH64 */
+
 
 DR_API
 /**

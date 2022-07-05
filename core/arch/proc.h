@@ -72,7 +72,10 @@ typedef struct _cpu_info_t {
 #ifdef AARCHXX
     uint architecture;
 #endif
-/* TODO: riscv64? */
+/* TODO: riscv64 */
+#ifdef RISCV64
+    uint architecture;
+#endif
     uint family;
     uint type;
     uint model;
@@ -109,7 +112,12 @@ proc_set_cache_size(uint val, uint *dst);
 uint
 proc_get_architecture(void);
 #endif
-/* TODO: riscv64? */
+
+/* TODO: riscv64 */
+#ifdef RISCV64
+uint
+proc_get_architecture(void);
+#endif
 
 void
 machine_cache_sync(void *pc_start, void *pc_end, bool flush_icache);

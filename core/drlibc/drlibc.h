@@ -78,7 +78,15 @@ clear_icache(void *beg, void *end);
 bool
 get_cache_line_size(OUT size_t *dcache_line_size, OUT size_t *icache_line_size);
 #endif
-/* TODO: riscv64? */
+
+/* TODO: riscv64 */
+#ifdef RISCV64
+void
+clear_icache(void *beg, void *end);
+
+bool
+get_cache_line_size(OUT size_t *dcache_line_size, OUT size_t *icache_line_size);
+#endif
 
 void
 dr_fpu_exception_init(void);

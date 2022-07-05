@@ -81,7 +81,11 @@
 #ifdef AARCH64
 #    include "build_ldstex.h"
 #endif
-/* TODO: riscv64? */
+
+/* TODO: riscv64 */
+#ifdef RISCV64
+#    include "build_ldstex.h"
+#endif
 
 enum { DIRECT_XFER_LENGTH = 5 };
 
@@ -5974,7 +5978,43 @@ fixup_cbr_on_stolen_reg(dcontext_t *dcontext, instrlist_t *trace, instr_t *targe
     return prev;
 }
 #endif
-/* TODO: riscv64? */
+
+/* TODO: riscv64 */
+/* TODO: this is a copy of AARCH64 */
+#ifdef RISCV64
+/* For AArch64 we have a special case if we cannot remove all code after
+ * the direct branch, which is mangled by cbz/cbnz stolen register.
+ * For example:
+ *    cbz x28, target
+ * would be mangled (see mangle_cbr_stolen_reg() in aarchxx/mangle.c) into:
+ *    str x0, [x28]
+ *    ldr x0, [x28, #32]
+ *    cbnz x0, fall       <- meta instr, not treated as exit cti
+ *    ldr x0, [x28]
+ *    b target            <- delete after
+ * fall:
+ *    ldr x0, [x28]
+ *    b fall_target
+ *    ...
+ * If we delete all code after "b target", then the "fall" path would
+ * be lost. Therefore we need to append the fall path at the end of
+ * the trace as a fake exit stub. Swapping them might be dangerous since
+ * a stub trace may be created on both paths.
+ *
+ * XXX i#5062 This special case is not needed when we elimiate decoding from code cache
+ */
+static bool
+instr_is_load_tls(instr_t *instr)
+{
+    if (!instr || !instr_raw_bits_valid(instr))
+        return false;
+    else {
+        return instr_get_opcode(instr) == OP_ldr &&
+            opnd_get_base(instr_get_src(instr, 0)) == dr_reg_stolen;
+    }
+}
+
+#endif
 
 /* Mangles an indirect branch in a trace where a basic block with tag "tag"
  * is being added as the next block beyond the indirect branch.
@@ -8469,4 +8509,174 @@ fixup_indirect_trace_exit(dcontext_t *dcontext, instrlist_t *trace)
     return added_size;
 }
 #endif
-/* TODO: riscv64? */
+
+/* TODO: riscv64 */
+/* TODO: this is a copy of AARCH64 */
+#ifdef RISCV64
+/* Emit addtional code to fix up indirect trace exit for AArch64.
+ * For each indirect branch in trace we have the following code:
+ *      str x0, TLS_REG0_SLOT
+ *      mov x0, #trace_next_target
+ *      eor x0, x0, jump_target
+ *      cbnz x0, trace_exit (ibl_routine)
+ *      ldr x0, TLS_REG0_SLOT
+ * For the trace_exit (ibl_routine), it needs to conform to the
+ * protocol specified in emit_indirect_branch_lookup in
+ * aarch64/emit_utils.c.
+ * The ibl routine requires:
+ *     x2: contains indirect branch target
+ *     TLS_REG2_SLOT: contains app's x2
+ * Therefore we need to add addtional spill instructions
+ * before we actually jump to the ibl routine.
+ * We want the indirect hit path to have minimum instructions
+ * and also conform to the protocol of ibl routine
+ * Therefore we append the restore at the end of the trace
+ * after the backward jump to trace head.
+ * For example, the code will be fixed to:
+ *      eor x0, x0, jump_target
+ *      cbnz x0, trace_exit_label
+ *      ...
+ *      b trace_head
+ * trace_exit_label:
+ *      ldr x0, TLS_REG0_SLOT
+ *      str x2, TLS_REG2_SLOT
+ *      mov x2, jump_target
+ *      b ibl_routine
+ *
+ * XXX i#2974 This way of having a trace_exit_label at the end of a trace
+ * breaks the linear requirement which is assumed by a lot of code, including
+ * translation. Currently recreation of instruction list is fixed by including
+ * a special call to this function. We might need to consider add special
+ * support in translate.c or use an alternative linear control flow.
+ *
+ */
+int
+fixup_indirect_trace_exit(dcontext_t *dcontext, instrlist_t *trace)
+{
+    instr_t *instr, *prev, *branch;
+    instr_t *trace_exit_label;
+    app_pc target = 0;
+    app_pc ind_target = 0;
+    app_pc instr_trans;
+    reg_id_t scratch;
+    reg_id_t jump_target_reg = DR_REG_NULL;
+    uint indirect_type = 0;
+    int added_size = 0;
+    trace_exit_label = NULL;
+    /* We record the original trace end */
+    instr_t *trace_end = instrlist_last(trace);
+
+    LOG(THREAD, LOG_MONITOR, 4, "fixup the indirect trace exit\n");
+
+    /* It is possible that we have multiple indirect trace exits to fix up
+     * when more than one basic blocks are added as the trace.
+     * And so we iterate over the entire trace to look for indirect exits.
+     */
+    for (instr = instrlist_first(trace); instr != trace_end;
+         instr = instr_get_next(instr)) {
+        if (instr_is_exit_cti(instr)) {
+            target = instr_get_branch_target_pc(instr);
+            /* Check for indirect exit. */
+            if (is_indirect_branch_lookup_routine(dcontext, (cache_pc)target)) {
+                /* This branch must be a cbnz, or the last_cti was not fixed up. */
+                ASSERT(instr->opcode == OP_cbnz);
+
+                trace_exit_label = INSTR_CREATE_label(dcontext);
+                ind_target = target;
+                /* Modify the target of the cbnz. */
+                instr_set_target(instr, opnd_create_instr(trace_exit_label));
+                indirect_type = instr_exit_branch_type(instr);
+                /* unset exit type */
+                instr->flags &= ~EXIT_CTI_TYPES;
+                instr_set_our_mangling(instr, true);
+
+                /* Retrieve jump target reg from the xor instruction. */
+                prev = instr_get_prev(instr);
+                ASSERT(prev->opcode == OP_eor);
+
+                ASSERT(instr_num_srcs(prev) == 4 && opnd_is_reg(instr_get_src(prev, 1)));
+                jump_target_reg = opnd_get_reg(instr_get_src(prev, 1));
+
+                ASSERT(ind_target && jump_target_reg != DR_REG_NULL);
+
+                /* Choose any scratch register except the target reg. */
+                scratch = (jump_target_reg == DR_REG_X0) ? DR_REG_X1 : DR_REG_X0;
+                /* Add the trace exit label. */
+                instrlist_append(trace, trace_exit_label);
+                instr_trans = instr_get_translation(instr);
+                /* ldr x0, TLS_REG0_SLOT */
+                instrlist_append(trace,
+                                 INSTR_XL8(instr_create_restore_from_tls(
+                                               dcontext, scratch, TLS_REG0_SLOT),
+                                           instr_trans));
+                added_size += AARCH64_INSTR_SIZE;
+                /* if x2 alerady contains the jump_target, then there is no need to store
+                 * it away and load value of jump target into it
+                 */
+                if (jump_target_reg != IBL_TARGET_REG) {
+                    /* str x2, TLS_REG2_SLOT */
+                    instrlist_append(
+                        trace,
+                        INSTR_XL8(instr_create_save_to_tls(dcontext, IBL_TARGET_REG,
+                                                           TLS_REG2_SLOT),
+                                  instr_trans));
+                    added_size += AARCH64_INSTR_SIZE;
+                    /* mov IBL_TARGET_REG, jump_target */
+                    ASSERT(jump_target_reg != DR_REG_NULL);
+                    instrlist_append(
+                        trace,
+                        INSTR_XL8(XINST_CREATE_move(dcontext,
+                                                    opnd_create_reg(IBL_TARGET_REG),
+                                                    opnd_create_reg(jump_target_reg)),
+                                  instr_trans));
+                    added_size += AARCH64_INSTR_SIZE;
+                }
+                /* b ibl_target */
+                branch = XINST_CREATE_jump(dcontext, opnd_create_pc(ind_target));
+                instr_exit_branch_set_type(branch, indirect_type);
+                instr_set_translation(branch, instr_trans);
+                instrlist_append(trace, branch);
+                added_size += AARCH64_INSTR_SIZE;
+            }
+        } else if ((instr->opcode == OP_cbz || instr->opcode == OP_cbnz ||
+                    instr->opcode == OP_tbz || instr->opcode == OP_tbnz) &&
+                   instr_is_load_tls(instr_get_next(instr))) {
+            /* Don't invoke the decoder;
+             * only mangled instruction (by mangle_cbr_stolen_reg) reached here.
+             */
+
+            instr_t *next = instr_get_next(instr);
+
+            /* Get the actual target of the cbz/cbnz. */
+            opnd_t fall_target = instr_get_target(instr);
+            /* Create new label. */
+            trace_exit_label = INSTR_CREATE_label(dcontext);
+            instr_set_target(instr, opnd_create_instr(trace_exit_label));
+            /* Insert restore at end of trace. */
+            instrlist_append(trace, trace_exit_label);
+            instr_trans = instr_get_translation(instr);
+            /* ldr cbz_reg, TLS_REG0_SLOT */
+            reg_id_t mangled_reg = ((*(uint *)next->bytes) & 31) + DR_REG_START_GPR;
+            instrlist_append(trace,
+                             INSTR_XL8(instr_create_restore_from_tls(
+                                           dcontext, mangled_reg, TLS_REG0_SLOT),
+                                       instr_trans));
+            added_size += AARCH64_INSTR_SIZE;
+            /* b fall_target */
+            branch = XINST_CREATE_jump(dcontext, fall_target);
+            instr_set_translation(branch, instr_trans);
+            instrlist_append(trace, branch);
+            added_size += AARCH64_INSTR_SIZE;
+            /* Because of the jump, a new stub was created.
+             * and it is possible that this jump is leaving the fragment
+             * in which case we should not increase the size of the fragment
+             */
+            if (instr_is_exit_cti(branch)) {
+                added_size += DIRECT_EXIT_STUB_SIZE(0);
+            }
+        }
+    }
+    return added_size;
+}
+#endif
+

@@ -223,7 +223,14 @@ decode_raw_is_cond_branch_zero(dcontext_t *dcontext, byte *pc);
 byte *
 decode_raw_cond_branch_zero_target(dcontext_t *dcontext, byte *pc);
 #endif
-/* TODO: riscv64? */
+
+/* TODO: riscv64 */
+#ifdef RISCV64
+bool
+decode_raw_is_cond_branch_zero(dcontext_t *dcontext, byte *pc);
+byte *
+decode_raw_cond_branch_zero_target(dcontext_t *dcontext, byte *pc);
+#endif
 
 /* exported routines */
 

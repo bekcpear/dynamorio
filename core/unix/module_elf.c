@@ -1410,8 +1410,12 @@ dr_symbol_export_iterator_stop(dr_symbol_export_iterator_t *dr_iter)
 /* Defined in aarch64.asm. */
 ptr_int_t
 tlsdesc_resolver(struct tlsdesc_t *);
+/* TODO: riscv64 */
+#    elif defined(RISCV64) && !defined(DR_HOST_NOT_TARGET)
+/* Defined in aarch64.asm. */
+ptr_int_t
+tlsdesc_resolver(struct tlsdesc_t *);
 #    else
-/* TODO: riscv64? */
 static ptr_int_t
 tlsdesc_resolver(struct tlsdesc_t *arg)
 {

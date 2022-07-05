@@ -142,7 +142,12 @@ typedef struct rlimit64 rlimit64_t;
                                                     "ldr " ASM_R3 ", [" ASM_R3 \
                                                     ", " ASM_R2 "] \n\t"
 #endif /* ARM */
-/* TODO: riscv64? */
+/* TODO: riscv64 */
+#if defined(DR_HOST_RISCV64)
+#    define READ_TP_TO_R3_DISP_IN_R2    \
+        "mrs " ASM_R3 ", tpidr_el0\n\t" \
+        "ldr " ASM_R3 ", [" ASM_R3 ", " ASM_R2 "] \n\t"
+#endif
 
 /* Prototype for all functions in .init_array. */
 typedef int (*init_fn_t)(int argc, char **argv, char **envp);
@@ -1647,17 +1652,25 @@ os_timeout(int time_in_milliseconds)
  */
 #    define WRITE_TLS_SLOT_IMM(imm, var)                                            \
         do {                                                                        \
+          (void) imm; \
+          (void) var; \
         } while (0)
 #    define READ_TLS_SLOT_IMM(imm, var)                                             \
         do {                                                                        \
+          (void) imm; \
+          var = 0; \
         } while (0)
 #    define WRITE_TLS_INT_SLOT_IMM WRITE_TLS_SLOT_IMM /* b/c 32-bit */
 #    define READ_TLS_INT_SLOT_IMM READ_TLS_SLOT_IMM   /* b/c 32-bit */
 #    define WRITE_TLS_SLOT(offs, var)                                               \
         do {                                                                        \
+          (void) offs; \
+          (void) var; \
         } while (0)
 #    define READ_TLS_SLOT(offs, var)                                                \
         do {                                                                        \
+          (void) offs; \
+          var = 0; \
         } while (0)
 #endif /* X86/ARM/RISCV64 */
 
@@ -1772,20 +1785,7 @@ is_thread_tls_initialized(void)
      * TODO: riscv64
      * TODO: this is a copy of AARCHXX
      */
-    byte **dr_tls_base_addr;
-    if (tls_global_type == TLS_TYPE_NONE)
-        return false;
-    dr_tls_base_addr = (byte **)get_dr_tls_base_addr();
-    if (dr_tls_base_addr == NULL || *dr_tls_base_addr == NULL ||
-        /* We use the TLS slot's value to identify a now-exited thread (i#1578) */
-        *dr_tls_base_addr == TLS_SLOT_VAL_EXITED)
-        return false;
-    /* We would like to ASSERT is_dynamo_address(*tls_swap_slot) but that leads
-     * to infinite recursion for an address not in the vm_reserve area, as
-     * dynamo_vm_areas_start_reading() ending up calling
-     * deadlock_avoidance_unlock() which calls get_thread_private_dcontext()
-     * which comes here.
-     */
+    ASSERT_NOT_IMPLEMENTED(false);
     return true;
 #endif
 }
@@ -1925,7 +1925,33 @@ os_set_app_tls_base(dcontext_t *dcontext, reg_id_t reg, void *base)
     return false;
 }
 #endif
-/* TODO: riscv64? */
+
+/* TODO: riscv64 */
+#ifdef RISCV64
+bool
+os_set_app_tls_base(dcontext_t *dcontext, reg_id_t reg, void *base)
+{
+    os_local_state_t *os_tls;
+    IF_NOT_HAVE_TLS(ASSERT_NOT_REACHED());
+    ASSERT(reg == TLS_REG_LIB || reg == TLS_REG_ALT);
+    if (dcontext == NULL)
+        dcontext = get_thread_private_dcontext();
+    /* we will be called only if TLS is initialized */
+    ASSERT(dcontext != NULL);
+    os_tls = get_os_tls_from_dc(dcontext);
+    if (reg == TLS_REG_LIB) {
+        os_tls->app_lib_tls_base = base;
+        LOG(THREAD, LOG_THREADS, 1, "TLS app lib base  =" PFX "\n", base);
+        return true;
+    } else if (reg == TLS_REG_ALT) {
+        os_tls->app_alt_tls_base = base;
+        LOG(THREAD, LOG_THREADS, 1, "TLS app alt base  =" PFX "\n", base);
+        return true;
+    }
+    ASSERT_NOT_REACHED();
+    return false;
+}
+#endif
 
 void *
 os_get_app_tls_base(dcontext_t *dcontext, reg_id_t reg)
@@ -2809,9 +2835,8 @@ os_should_swap_state(void)
     return (INTERNAL_OPTION(mangle_app_seg) && INTERNAL_OPTION(private_loader));
 #elif defined(AARCHXX)
     return INTERNAL_OPTION(private_loader);
-#elif defined(AARCHXX)
+#elif defined(RISCV64)
     /* TODO: riscv64
-     * TODO: this is a copy of AARCHXX
      */
     return INTERNAL_OPTION(private_loader);
 #endif

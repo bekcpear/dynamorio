@@ -71,7 +71,11 @@
 #ifdef AARCHXX
 #    define MAX_IMMED_IN_CMP 255
 #endif
-/* TODO: riscv64? */
+
+/* TODO: riscv64 */
+#ifdef RISCV64
+#    define MAX_IMMED_IN_CMP 255
+#endif
 
 typedef enum {
     DRBBDUP_ENCODING_SLOT = 0, /* Used as a spill slot for dynamic case generation. */
@@ -81,7 +85,10 @@ typedef enum {
 #ifdef AARCHXX
     DRBBDUP_SCRATCH_REG2_SLOT,
 #endif
-/* TODO: riscv64? */
+/* TODO: riscv64 */
+#ifdef RISCV64
+    DRBBDUP_SCRATCH_REG2_SLOT,
+#endif
     DRBBDUP_SLOT_COUNT,
 } drbbdup_thread_slots_t;
 
@@ -92,7 +99,11 @@ typedef enum {
 /* RISC architectures need a 2nd scratch register. */
 #    define DRBBDUP_SCRATCH_REG2 DR_REG_R1
 #endif
-/* TODO: riscv64? */
+/* TODO: riscv64 */
+#ifdef RISCV64
+/* RISC architectures need a 2nd scratch register. */
+#    define DRBBDUP_SCRATCH_REG2 DR_REG_R1
+#endif
 
 /* Special index values are used to help guide case selection. */
 #define DRBBDUP_DEFAULT_INDEX -1
@@ -115,7 +126,11 @@ typedef struct {
     bool is_scratch_reg2_needed;
     bool is_scratch_reg2_dead; /* If _needed, is DRBBDUP_SCRATCH_REG2 dead at start. */
 #endif
-/* TODO: riscv64? */
+/* TODO: riscv64 */
+#ifdef RISCV64
+    bool is_scratch_reg2_needed;
+    bool is_scratch_reg2_dead; /* If _needed, is DRBBDUP_SCRATCH_REG2 dead at start. */
+#endif
     bool is_gen; /* Denotes whether a new bb copy is dynamically being generated. */
     drbbdup_case_t default_case;
     drbbdup_case_t *cases; /* Is NULL if enable_dup is not set. */

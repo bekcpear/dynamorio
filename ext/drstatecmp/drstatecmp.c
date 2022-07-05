@@ -448,7 +448,17 @@ drstatecmp_check_xflags_value(const char *name, void *tag, uint reg_value,
         drstatecmp_report_error(name, tag);
 }
 #endif
-/* TODO: riscv64? */
+
+/* TODO: riscv64 */
+#ifdef RISCV64
+static void
+drstatecmp_check_xflags_value(const char *name, void *tag, uint reg_value,
+                              uint reg_expected)
+{
+    if (reg_value != reg_expected)
+        drstatecmp_report_error(name, tag);
+}
+#endif
 
 static void
 drstatecmp_check_simd_value

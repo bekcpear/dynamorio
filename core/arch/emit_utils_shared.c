@@ -1917,7 +1917,7 @@ append_jmp_to_fcache_target(dcontext_t *dcontext, instrlist_t *ilist,
             /* br x0 */
             APP(ilist, INSTR_CREATE_br(dcontext, opnd_create_reg(DR_REG_X0)));
 #elif defined(RISCV64)
-            /* TODO: riscv64? */
+            /* TODO: riscv64 */
             /* TODO: this is a copy of AARCH64*/
             /* Load next_tag from FCACHE_ENTER_TARGET_SLOT, stored by
              * append_setup_fcache_target.
@@ -3097,7 +3097,9 @@ instrlist_convert_to_x86(instrlist_t *ilist)
 }
 #endif
 
-#ifndef AARCH64
+//#ifndef AARCH64
+/* TODO: riscv64 */
+#if (!defined(AARCH64) && !defined(RISCV64))
 bool
 instr_is_ibl_hit_jump(instr_t *instr)
 {
@@ -3105,7 +3107,6 @@ instr_is_ibl_hit_jump(instr_t *instr)
     return instr_is_jump_mem(instr);
 }
 #endif
-/* TODO: riscv64? */
 
 /* what we do on a hit in the hashtable */
 /* Restore XBX saved from the indirect exit stub insert_jmp_to_ibl() */
@@ -5015,7 +5016,81 @@ emit_fcache_enter_gonative(dcontext_t *dcontext, generated_code_t *code, byte *p
     return pc + len;
 }
 #endif /* AARCHXX */
-/* TODO: riscv64? */
+
+/* TODO: riscv64 */
+#ifdef RISCV64
+byte *
+emit_fcache_enter_gonative(dcontext_t *dcontext, generated_code_t *code, byte *pc)
+{
+    int len;
+    instrlist_t ilist;
+    patch_list_t patch;
+    bool absolute = false;
+    bool shared = true;
+
+    init_patch_list(&patch, absolute ? PATCH_TYPE_ABSOLUTE : PATCH_TYPE_INDIRECT_XDI);
+    instrlist_init(&ilist);
+
+    append_fcache_enter_prologue(dcontext, &ilist, absolute);
+    append_setup_fcache_target(dcontext, &ilist, absolute, shared);
+    append_call_exit_dr_hook(dcontext, &ilist, absolute, shared);
+
+    /* restore the original register state */
+    append_restore_xflags(dcontext, &ilist, absolute);
+    append_restore_simd_reg(dcontext, &ilist, absolute);
+    append_restore_gpr(dcontext, &ilist, absolute);
+
+    /* We need to restore the stolen reg, but we have no scratch registers.
+     * We are forced to use the stack here.  We assume a go-native point is
+     * a clean ABI point where the stack is valid and there is no app state
+     * beyond TOS.
+     */
+    /* spill r0 */
+    APP(&ilist,
+        XINST_CREATE_store(dcontext, OPND_CREATE_MEMPTR(DR_REG_SP, -XSP_SZ),
+                           opnd_create_reg(DR_REG_R0)));
+    /* Load target PC from FCACHE_ENTER_TARGET_SLOT, stored by
+     * by append_setup_fcache_target.
+     */
+    APP(&ilist,
+        instr_create_restore_from_tls(dcontext, DR_REG_R0, FCACHE_ENTER_TARGET_SLOT));
+    /* store target PC */
+    APP(&ilist,
+        XINST_CREATE_store(dcontext, OPND_CREATE_MEMPTR(DR_REG_SP, -2 * XSP_SZ),
+                           opnd_create_reg(DR_REG_R0)));
+    /* restore r0 */
+    APP(&ilist,
+        XINST_CREATE_load(dcontext, opnd_create_reg(DR_REG_R0),
+                          OPND_CREATE_MEMPTR(DR_REG_SP, -XSP_SZ)));
+    /* restore stolen reg */
+    APP(&ilist,
+        instr_create_restore_from_tls(dcontext, dr_reg_stolen, TLS_REG_STOLEN_SLOT));
+    /* go to stored target PC */
+    /* For AArch64, we can't jump through memory like on x86, or write
+     * to the PC like on ARM.  For now assume we're at an ABI call
+     * boundary (true for dr_app_stop) and we clobber the caller-saved
+     * register r12.
+     * XXX: The only clean transfer method we have is SYS_rt_sigreturn,
+     * which we do use to send other threads native on detach.
+     * To support externally-triggered detach at non-clean points in the future
+     * we could try changing the callers to invoke thread_set_self_mcontext()
+     * instead of coming here (and also finish implementing that for A64).
+     */
+    APP(&ilist,
+        XINST_CREATE_load(dcontext, opnd_create_reg(DR_REG_R12),
+                          OPND_CREATE_MEMPTR(DR_REG_SP, -2 * XSP_SZ)));
+    APP(&ilist, INSTR_CREATE_br(dcontext, opnd_create_reg(DR_REG_R12)));
+
+    /* now encode the instructions */
+    len = encode_with_patch_list(dcontext, &patch, &ilist, pc);
+    ASSERT(len != 0);
+
+    /* free the instrlist_t elements */
+    instrlist_clear(dcontext, &ilist);
+
+    return pc + len;
+}
+#endif /* RISCV64 */
 
 #ifdef WINDOWS
 /* like fcache_enter but indirects the dcontext passed in through edi */
@@ -5216,7 +5291,7 @@ decode_syscall_num(dcontext_t *dcontext, byte *entry)
         }
         if (instr_num_dsts(&instr) > 0 && opnd_is_reg(instr_get_dst(&instr, 0)) &&
             opnd_get_reg(instr_get_dst(&instr, 0)) == SCRATCH_REG0) {
-#ifndef AARCH64 /* FIXME i#1569: recognise "move" on AArch64 */
+#if (!defined(AARCH64) && !defined(RISCV64)) /* FIXME i#1569: recognise "move" on AArch64 */ /* TODO: riscv64 */
             if (instr_get_opcode(&instr) == IF_X86_ELSE(OP_mov_imm, OP_mov)) {
                 IF_X64(ASSERT_TRUNCATE(int, int,
                                        opnd_get_immed_int(instr_get_src(&instr, 0))));
@@ -5267,7 +5342,12 @@ emit_new_thread_dynamo_start(dcontext_t *dcontext, byte *pc)
                                         * use of the stolen reg, which would be
                                         * a race w/ the parent's use of it!
                                         */
+/* TODO: riscv64 */
+#    ifdef AARCH64
                                        SCRATCH_REG0 _IF_AARCH64(false));
+#    elif defined(RISCV64)
+                                       SCRATCH_REG0 _IF_RISCV64(false));
+#    endif
 #    ifndef AARCH64
     /* put pre-push xsp into priv_mcontext_t.xsp slot */
     ASSERT(offset == get_clean_call_switch_stack_size());
@@ -5507,7 +5587,36 @@ get_ibl_entry_tls_offs(dcontext_t *dcontext, cache_pc ibl_entry)
     return (local - (byte *)&state);
 }
 #endif
-/* TODO: riscv64? */
+
+/* TODO: riscv64 */
+#ifdef RISCV64
+size_t
+get_ibl_entry_tls_offs(dcontext_t *dcontext, cache_pc ibl_entry)
+{
+    spill_state_t state;
+    byte *local;
+    ibl_type_t ibl_type = { 0 };
+    /* FIXME i#1551: add Thumb support: ARM vs Thumb gencode */
+    DEBUG_DECLARE(bool is_ibl =)
+    get_ibl_routine_type_ex(dcontext, ibl_entry, &ibl_type);
+    ASSERT(is_ibl);
+    /* FIXME i#1575: coarse-grain NYI on ARM/AArch64 */
+    ASSERT(ibl_type.source_fragment_type != IBL_COARSE_SHARED);
+    if (IS_IBL_TRACE(ibl_type.source_fragment_type)) {
+        if (IS_IBL_LINKED(ibl_type.link_state))
+            local = (byte *)&state.trace_ibl[ibl_type.branch_type].ibl;
+        else
+            local = (byte *)&state.trace_ibl[ibl_type.branch_type].unlinked;
+    } else {
+        ASSERT(IS_IBL_BB(ibl_type.source_fragment_type));
+        if (IS_IBL_LINKED(ibl_type.link_state))
+            local = (byte *)&state.bb_ibl[ibl_type.branch_type].ibl;
+        else
+            local = (byte *)&state.bb_ibl[ibl_type.branch_type].unlinked;
+    }
+    return (local - (byte *)&state);
+}
+#endif
 
 /* emit the special_ibl trampoline code for transferring the control flow to
  * ibl lookup

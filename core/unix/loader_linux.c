@@ -459,7 +459,9 @@ redirect____tls_get_addr()
      * TODO: riscv64
      * TODO: this is just a copy of AARCH64
      */
-    asm("str x0, %0" : "=m"((ti)) : : "x0");
+    //asm("str x0, %0" : "=m"((ti)) : : "x0");
+    asm("");
+    ti = NULL;
     ASSERT_NOT_REACHED();
 #endif /* X86/ARM/RISCV64 */
     LOG(GLOBAL, LOG_LOADER, 4, "__tls_get_addr: module: %d, offset: %d\n", ti->ti_module,

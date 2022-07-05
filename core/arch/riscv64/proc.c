@@ -47,8 +47,9 @@ static int num_opmask_registers;
         do {                                                                         \
             if (IDX > (NUM_FEATURE_REGISTERS - 1))                                   \
                 CLIENT_ASSERT(false, "Reading undefined AArch64 feature register!"); \
-            asm("mrs %0, " #REG : "=r"(FEATS[IDX]));                                 \
+            asm("");                                 \
         } while (0);
+            //asm("mrs %0, " #REG : "=r"(FEATS[IDX]));
 
 void
 read_feature_regs(uint64 isa_features[])
@@ -77,9 +78,9 @@ get_processor_specific_info(void)
      * ID_AA64ISAR0_EL1, ID_AA64ISAR1_EL1 and ID_AA64PFR0_EL1.
      */
     read_feature_regs(isa_features);
-    cpu_info.features.flags_aa64isar0 = isa_features[AA64ISAR0];
-    cpu_info.features.flags_aa64isar1 = isa_features[AA64ISAR1];
-    cpu_info.features.flags_aa64pfr0 = isa_features[AA64PFR0];
+    //cpu_info.features.flags_aa64isar0 = isa_features[AA64ISAR0];
+    //cpu_info.features.flags_aa64isar1 = isa_features[AA64ISAR1];
+    //cpu_info.features.flags_aa64pfr0 = isa_features[AA64PFR0];
 }
 
 #    define LOG_FEATURE(feature)       \

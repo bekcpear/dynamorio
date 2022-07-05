@@ -133,7 +133,12 @@ replace_retaddr_sentinel(void);
 byte *
 get_cur_xsp(void);
 #endif
-/* TODO: riscv64? */
+
+/* TODO: riscv64 */
+#ifdef RISCV64
+byte *
+get_cur_xsp(void);
+#endif
 
 /***************************************************************************
  * REQUEST TRACKING
@@ -601,6 +606,9 @@ drwrap_get_mcontext_internal(drwrap_context_t *wrapcxt, dr_mcontext_flags_t flag
                  */
 #ifdef AARCHXX
                 wrapcxt->mc->xflags = 0; /*0 is fine for ARM */
+#elif defined(RISCV64)
+/* TODO: riscv64 */
+                wrapcxt->mc->xflags = 0; /*0 is fine for ARM */
 #else
 #    ifdef WINDOWS
                 wrapcxt->mc->xflags = __readeflags();
@@ -613,7 +621,6 @@ drwrap_get_mcontext_internal(drwrap_context_t *wrapcxt, dr_mcontext_flags_t flag
 #    endif
                 ASSERT(!TEST(EFLAGS_DF, wrapcxt->mc->xflags), "DF not cleared");
 #endif
-/* TODO: riscv64? */
             }
         }
     }
@@ -1440,6 +1447,17 @@ drwrap_replace_native_push_retaddr(void *drcontext, instrlist_t *bb, app_pc pc,
         if (last == NULL || first == last)
             break;
     }
+#elif defined(RISCV64)
+/* TODO: riscv64 */
+    instr_t *first, *last;
+    instrlist_insert_mov_immed_ptrsz(drcontext, pushval, opnd_create_reg(DR_REG_LR), bb,
+                                     NULL, &first, &last);
+    for (;; first = instr_get_next(first)) {
+        instr_set_app(first);
+        instr_set_translation(first, pc);
+        if (last == NULL || first == last)
+            break;
+    }
 #else
     if (stacksz == OPSZ_4 IF_X64(&&x86)) {
         instrlist_append(
@@ -1491,7 +1509,6 @@ drwrap_replace_native_push_retaddr(void *drcontext, instrlist_t *bb, app_pc pc,
                       pc));
     }
 #endif /* !ARM */
-/* TODO: riscv64? */
 }
 
 static void
@@ -1573,6 +1590,14 @@ drwrap_replace_native_bb(void *drcontext, instrlist_t *bb, instr_t *inst, app_pc
         XINST_CREATE_store(
             drcontext, dr_reg_spill_slot_opnd(drcontext, SPILL_SLOT_REDIRECT_NATIVE_TGT),
             opnd_create_reg(DR_REG_LR)));
+#elif defined(RISCV64)
+/* TODO: riscv64 */
+    /* We don't support non-zero stack_adjust, so we use the slot to store LR. */
+    instrlist_meta_append(
+        bb,
+        XINST_CREATE_store(
+            drcontext, dr_reg_spill_slot_opnd(drcontext, SPILL_SLOT_REDIRECT_NATIVE_TGT),
+            opnd_create_reg(DR_REG_LR)));
 #else
     instrlist_meta_append(
         bb,
@@ -1580,7 +1605,6 @@ drwrap_replace_native_bb(void *drcontext, instrlist_t *bb, instr_t *inst, app_pc
             drcontext, dr_reg_spill_slot_opnd(drcontext, SPILL_SLOT_REDIRECT_NATIVE_TGT),
             OPND_CREATE_INT32(rn->stack_adjust)));
 #endif
-/* TODO: riscv64? */
     if (rn->user_data != NULL) {
 #if defined(ARM) || defined(X64)
         /* We clobber CALL_POINT_SCRATCH_REG, which is scratch in most call convs */
@@ -1710,12 +1734,14 @@ replace_native_xfer_target(void)
     void *drcontext = dr_get_current_drcontext();
 #ifdef AARCHXX
     byte *target = replace_native_ret_stub(0);
+#elif defined(RISCV64)
+/* TODO: riscv64 */
+    byte *target = replace_native_ret_stub(0);
 #else
     uint stack_adjust =
         (uint)dr_read_saved_reg(drcontext, SPILL_SLOT_REDIRECT_NATIVE_TGT);
     byte *target = replace_native_ret_stub(stack_adjust);
 #endif
-/* TODO: riscv64? */
 
     /* Set up for gencode.  We want to re-do the stdcall arg and retaddr teardown,
      * but we don't want the app to see it.  We can't easily do it in

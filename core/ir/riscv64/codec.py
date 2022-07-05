@@ -405,14 +405,14 @@ def generate_encoder(patterns, opndsettab, opndtab, curr_isa, next_isa):
     return '\n'.join(c) + '\n'
 
 def generate_opcodes(patterns):
-    c = ['#ifndef _DR_IR_OPCODES_AARCH64_H_',
-         '#define _DR_IR_OPCODES_AARCH64_H_ 1',
+    c = ['#ifndef _DR_IR_OPCODES_RISCV64_H_',
+         '#define _DR_IR_OPCODES_RISCV64_H_ 1',
          '',
          '/****************************************************************************',
          ' * OPCODES',
          ' */',
          '/**',
-         ' * @file dr_ir_opcodes_aarch64.h',
+         ' * @file dr_ir_opcodes_riscv64.h',
          ' * @brief Instruction opcode constants for AArch64.',
          ' */',
          '/** Opcode constants for use in the instr_t data structure. */',
@@ -452,7 +452,7 @@ def generate_opcodes(patterns):
           '/******************************'
           '**********************************************/',
           '',
-          '#endif /* _DR_IR_OPCODES_AARCH64_H */']
+          '#endif /* _DR_IR_OPCODES_RISCV64_H */']
     return '\n'.join(c) + '\n'
 
 def generate_opcode_names(patterns):

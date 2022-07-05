@@ -254,8 +254,14 @@ private:
         return TESTANY(kIsAarch64DcZvaMask, packed_);
     }
 #endif
-/* TODO: riscv64? */
+/* TODO: riscv64 */
+#ifdef RISCV64
     bool
+    is_aarch64_dc_zva() const
+    {
+        return TESTANY(kIsAarch64DcZvaMask, packed_);
+    }
+#endif    bool
     is_cti() const
     {
         return TESTANY(kIsCtiMask, packed_);
